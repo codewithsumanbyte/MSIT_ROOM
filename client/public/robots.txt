@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /room/*
 
-Sitemap: https://msit-room.onrender.com/sitemap.xml
+Sitemap: https://msitroom.vercel.app/sitemap.xml
