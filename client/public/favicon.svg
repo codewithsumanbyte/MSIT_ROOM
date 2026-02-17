@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="maroonGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#900C3F" />
+      <stop offset="100%" stop-color="#581845" />
+    </linearGradient>
+  </defs>
+
+  <circle cx="50" cy="50" r="50" fill="url(#maroonGrad)" />
+
+  <path d="M25 50 L50 30 L75 50 v30 c0 2.5-2 4.5-4.5 4.5 h-41 c-2.5 0-4.5-2-4.5-4.5 z" fill="white" />
+  
+  <path d="M46 84.5 v-8 a4 4 0 1 1 8 0 v8 z" fill="#900C3F"/>
+</svg>

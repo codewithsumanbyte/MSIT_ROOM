@@ -1,0 +1,51 @@
+# MSIT ROOM - Deployment Requirements
+# ---------------------------------------------------
+# NOTE: This is a Node.js project.
+# Real dependencies are in 'server/package.json' and 'client/package.json'.
+# This file is a summary for deployment reference.
+
+# --- System Requirements ---
+Node.js >= 18.0.0
+npm >= 9.0.0
+
+# --- Environment Variables ---
+# Server (.env)
+PORT=3000
+
+# Client (.env or Vercel Environment Variables)
+VITE_SERVER_URL=https://your-backend-url.onrender.com (Example)
+
+# --- Backend Dependencies (cd server && npm install) ---
+cors
+dotenv
+express
+multer
+socket.io
+uuid
+
+# --- Frontend Dependencies (cd client && npm install) ---
+react
+react-dom
+react-router-dom
+socket.io-client
+tailwindcss
+lucide-react
+react-hot-toast
+framer-motion
+emoji-picker-react
+qrcode.react
+react-syntax-highlighter
+vite (Build Tool)
+
+# --- Deployment Commands ---
+
+# 1. Backend (e.g., Render/Heroku/Railway)
+# Root Directory: server
+# Build Command: npm install
+# Start Command: npm start
+
+# 2. Frontend (e.g., Vercel/Netlify)
+# Root Directory: client
+# Build Command: npm run build
+# Output Directory: dist
+# Install Command: npm install

@@ -1,0 +1,20 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="maroonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#900C3F;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#581845;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Hexagon Background -->
+  <path d="M100 20 L180 65 V135 L100 180 L20 135 V65 Z" fill="url(#maroonGrad)" />
+  
+  <!-- Stylized 'M' inside -->
+  <path d="M60 80 L60 140 M140 80 L140 140 M60 80 L100 110 L140 80" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  
+  <!-- Optional: Connection dots -->
+  <circle cx="60" cy="80" r="6" fill="white" />
+  <circle cx="140" cy="80" r="6" fill="white" />
+  <circle cx="100" cy="110" r="6" fill="white" />
+
+</svg>
