@@ -332,8 +332,8 @@ const Room = () => {
 
             </div>
 
-            {/* Input Area */}
-            <div className="flex-none bg-white p-3 border-t border-gray-200 z-40">
+            {/* Input Area - Fixed at bottom for mobile reliability */}
+            <div className="flex-none bg-white p-3 border-t border-gray-200 z-50 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 <div className="max-w-7xl mx-auto flex items-end gap-2 relative">
 
                     {/* Emoji Picker */}
@@ -379,7 +379,7 @@ const Room = () => {
                             value={newMessage}
                             onChange={(e) => setNewMessage(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            placeholder="Type a message (Shift+Enter for new line)..."
+                            placeholder="Type a message..."
                             rows={1}
                             className="flex-1 bg-transparent py-2 outline-none text-gray-900 placeholder:text-gray-400 min-w-0 text-base resize-none max-h-32 scrollbar-thin scrollbar-thumb-gray-300"
                             style={{ minHeight: '44px' }}
