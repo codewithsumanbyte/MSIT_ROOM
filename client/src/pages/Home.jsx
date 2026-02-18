@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useRoom } from '../context/RoomContext';
-import { ArrowRight, Clock, Users, Zap, Star, Quote, Shield, FileText, Share2, Trash2 } from 'lucide-react';
+import { ArrowRight, Clock, Users, Zap, Star, Quote, Shield, FileText, Share2, Trash2, Github, Linkedin, ExternalLink } from 'lucide-react';
 
 const testimonials = [
     { name: "Sourin Roy", text: "The fastest way to share files effortlessly. Seamless experience!", role: "Student" },
@@ -68,6 +68,11 @@ const Home = () => {
                     <p className="text-gray-400 font-bold text-sm md:text-base tracking-[0.3em] uppercase opacity-80">
                         Simple. Secure. Speed.
                     </p>
+                    <div className="pt-4">
+                        <Link to="/how-it-works" className="inline-flex items-center gap-2 text-[#900C3F] font-bold border-b-2 border-[#900C3F]/20 hover:border-[#900C3F] transition-colors pb-1 text-sm md:text-base">
+                            <Zap className="w-4 h-4" /> See How It Works
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Cards Section */}
@@ -145,6 +150,53 @@ const Home = () => {
 
                 </div>
 
+                {/* Visual Features Section - CSS "Images" */}
+                <div className="grid md:grid-cols-3 gap-8 w-full max-w-6xl mb-24 px-4">
+
+                    {/* Feature 1: Speed */}
+                    <div className="group relative p-8 rounded-[2rem] bg-gradient-to-br from-white to-gray-50 border border-gray-100 shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-hidden text-left">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-[#900C3F]/5 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-150 duration-500"></div>
+                        <div className="w-16 h-16 bg-[#F5E6EC] rounded-2xl flex items-center justify-center mb-6 text-[#900C3F] group-hover:rotate-12 transition-transform duration-300 shadow-inner">
+                            <Zap className="w-8 h-8 fill-current" />
+                        </div>
+                        <h3 className="text-2xl font-black text-[#581845] mb-3">Lightning Fast</h3>
+                        <p className="text-gray-500 font-medium leading-relaxed">
+                            No login? Check. <br />
+                            No setup? Check. <br />
+                            Just create a room and start sharing in <span className="text-[#900C3F] font-bold">seconds</span>.
+                        </p>
+                    </div>
+
+                    {/* Feature 2: Security */}
+                    <div className="group relative p-8 rounded-[2rem] bg-gradient-to-br from-[#900C3F] to-[#581845] text-white shadow-xl hover:shadow-2xl hover:shadow-[#900C3F]/30 hover:-translate-y-2 transition-all duration-300 overflow-hidden text-left transform md:scale-110 z-10">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-150 duration-500"></div>
+                        <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-6 text-white group-hover:rotate-12 transition-transform duration-300 shadow-inner">
+                            <Shield className="w-8 h-8 fill-current" />
+                        </div>
+                        <h3 className="text-2xl font-black mb-3">End-to-End Secure</h3>
+                        <p className="text-white/80 font-medium leading-relaxed">
+                            Your data travels encrypted. <br />
+                            Rooms <span className="font-bold text-white border-b-2 border-white/30">auto-destruct</span> after expiry. <br />
+                            Zero digital footprint left behind.
+                        </p>
+                    </div>
+
+                    {/* Feature 3: Anonymity */}
+                    <div className="group relative p-8 rounded-[2rem] bg-gradient-to-br from-white to-gray-50 border border-gray-100 shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-hidden text-left">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-[#900C3F]/5 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-150 duration-500"></div>
+                        <div className="w-16 h-16 bg-[#F5E6EC] rounded-2xl flex items-center justify-center mb-6 text-[#900C3F] group-hover:rotate-12 transition-transform duration-300 shadow-inner">
+                            <Users className="w-8 h-8 fill-current" />
+                        </div>
+                        <h3 className="text-2xl font-black text-[#581845] mb-3">True Anonymity</h3>
+                        <p className="text-gray-500 font-medium leading-relaxed">
+                            No email required. <br />
+                            No tracking cookies. <br />
+                            <span className="text-[#900C3F] font-bold">Ghost Mode</span> enabled by default. You are invisible.
+                        </p>
+                    </div>
+
+                </div>
+
                 {/* Testimonials Section */}
                 <div className="w-full overflow-hidden py-10 relative">
                     <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-white to-transparent z-10"></div>
@@ -180,9 +232,28 @@ const Home = () => {
 
             </main>
 
-            <footer className="py-10 text-center text-gray-400 text-sm font-medium border-t border-gray-100 bg-gray-50/50 backdrop-blur-sm relative z-10 flex flex-col items-center gap-4">
-                <p>From One MSITian to Another. Made with ❤️.</p>
-                <Link to="/privacy" className="text-gray-400 hover:text-[#900C3F] transition-colors text-xs underline decoration-dotted underline-offset-4">Privacy Policy</Link>
+            <footer className="py-8 px-6 md:px-12 text-sm font-medium border-t border-gray-100 bg-gray-50/50 backdrop-blur-sm relative z-10 flex flex-col md:flex-row justify-between items-center gap-6 text-gray-400">
+
+                {/* Left Side: Socials */}
+                <div className="flex items-center gap-4 order-2 md:order-1">
+                    <a href="https://github.com/codewithsumanbyte" target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-gray-100 rounded-full transition-colors hover:text-[#900C3F]" aria-label="GitHub">
+                        <Github className="w-5 h-5" />
+                    </a>
+                    <a href="https://www.linkedin.com/in/suman-banerjee-b83113270/" target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-blue-50 hover:text-[#0077b5] rounded-full transition-colors" aria-label="LinkedIn">
+                        <Linkedin className="w-5 h-5" />
+                    </a>
+                </div>
+
+                {/* Center: Credits */}
+                <div className="flex flex-col items-center gap-1 order-1 md:order-2 text-center">
+                    <p>From One MSITian to Another. Made with ❤️.</p>
+                    <p className="text-xs opacity-80">Created by <span className="text-[#900C3F] font-bold">Suman Banerjee</span></p>
+                </div>
+
+                {/* Right: Links */}
+                <div className="order-3 flex items-center gap-4">
+                    <Link to="/privacy" className="text-gray-400 hover:text-[#900C3F] transition-colors text-xs underline decoration-dotted underline-offset-4">Privacy Policy</Link>
+                </div>
             </footer>
 
             <style>{`

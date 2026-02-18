@@ -78,6 +78,9 @@ const Room = () => {
     };
 
     const handleKeyDown = (e) => {
+        // Disable Enter-to-send on mobile devices
+        if (window.innerWidth < 768) return;
+
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleSend();
@@ -327,13 +330,16 @@ const Room = () => {
                         >
                             <LogOut className="w-4 h-4" /> Leave Room
                         </button>
+                        <div className="mt-2 text-center text-[10px] text-gray-400">
+                            Created by <span className="font-bold text-[#900C3F]">Suman Banerjee</span>
+                        </div>
                     </div>
                 </aside>
 
             </div>
 
             {/* Input Area - Fixed at bottom for mobile reliability */}
-            <div className="flex-none bg-white p-3 border-t border-gray-200 z-50 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <div className="flex-none bg-white p-3 border-t border-gray-200 z-50 pb-[max(1.5rem,env(safe-area-inset-bottom))] md:pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 <div className="max-w-7xl mx-auto flex items-end gap-2 relative">
 
                     {/* Emoji Picker */}
