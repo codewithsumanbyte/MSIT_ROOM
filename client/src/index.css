@@ -8,4 +8,65 @@
 
 body {
   @apply bg-gray-50 text-gray-900;
+  overscroll-behavior-y: none;
+  /* Prevents pull-to-refresh on mobile */
+  -webkit-tap-highlight-color: transparent;
+  /* Removes gray highlight on tap */
+  touch-action: manipulation;
+}
+
+/* Prevent iOS zoom on inputs */
+@media screen and (max-width: 768px) {
+
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* Hide scrollbar for clean look but allow scroll */
+/* Hide scrollbar for clean look but allow scroll */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Loading Screen Animations */
+@keyframes orbit {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse-soft {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.8;
+    transform: scale(0.95);
+  }
+}
+
+@keyframes progress {
+  from {
+    width: 0%;
+  }
+
+  to {
+    width: 100%;
+  }
 }

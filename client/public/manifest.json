@@ -1,0 +1,23 @@
+{
+    "name": "MSIT Room",
+    "short_name": "MSIT Room",
+    "description": "Secure, fast, and anonymous file sharing.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#900C3F",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "/logo.svg",
+            "type": "image/svg+xml",
+            "sizes": "192x192 512x512",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/favicon.svg",
+            "type": "image/svg+xml",
+            "sizes": "any"
+        }
+    ]
+}

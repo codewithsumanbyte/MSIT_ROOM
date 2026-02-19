@@ -8,13 +8,27 @@ class RoomStore {
         this.ROOM_EXPIRY = 30 * 60 * 1000; // 30 minutes
     }
 
-    createRoom(duration = 30) {
-        const code = this._generateRoomCode();
+    createRoom(duration = 30, customCode = null, ownerId = null) {
+        let code = customCode;
+
+        if (code) {
+            // If custom code provided, check if it exists
+            if (this.rooms.has(code)) {
+                const existingRoom = this.rooms.get(code);
+                // Reset expiry if accessing existing room
+                this._resetExpiryTimer(code);
+                return existingRoom;
+            }
+        } else {
+            code = this._generateRoomCode();
+        }
+
         // duration is in minutes, convert to ms
         const expiryTime = duration * 60 * 1000;
 
         const room = {
             code,
+            ownerId, // Store who created it
             createdAt: Date.now(),
             expiresAt: Date.now() + expiryTime,
             users: new Map(), // socketId -> User
@@ -62,6 +76,12 @@ class RoomStore {
         if (room.users) {
             room.users.delete(socketId);
         }
+    }
+
+    getUsers(code) {
+        const room = this.rooms.get(code);
+        if (!room || !room.users) return [];
+        return Array.from(room.users.values()); // Returns array of { id, socketId }
     }
 
     addMessage(code, message) {

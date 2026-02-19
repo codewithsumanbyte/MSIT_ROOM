@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useRoom } from '../context/RoomContext';
+import LoadingScreen from '../components/LoadingScreen';
 import { ArrowRight, Clock, Users, Zap, Star, Quote, Shield, FileText, Share2, Trash2, Github, Linkedin, ExternalLink } from 'lucide-react';
 
 const testimonials = [
@@ -14,6 +15,18 @@ const Home = () => {
     const { createRoom, joinRoom } = useRoom();
     const [joinCode, setJoinCode] = useState('');
     const [duration, setDuration] = useState(30);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsLoading(false);
+        }, 2000);
+        return () => clearTimeout(timer);
+    }, []);
+
+    if (isLoading) {
+        return <LoadingScreen />;
+    }
 
     const handleCreate = () => {
         createRoom(duration);
@@ -76,7 +89,7 @@ const Home = () => {
                 </div>
 
                 {/* Cards Section */}
-                <div className="grid md:grid-cols-2 gap-8 w-full max-w-5xl mb-24">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-7xl mb-24">
 
                     {/* Create Room Card */}
                     <div className="bg-white/80 backdrop-blur-sm border-2 border-gray-100 p-8 rounded-[2.5rem] shadow-xl shadow-gray-200/50 hover:shadow-2xl hover:shadow-[#900C3F]/20 hover:-translate-y-2 transition-all duration-300 group text-left relative overflow-hidden">
@@ -146,6 +159,39 @@ const Home = () => {
                                 Join Now
                             </button>
                         </form>
+                    </div>
+
+                    {/* Auto-Join Card */}
+                    <div className="md:col-span-2 lg:col-span-1 bg-gradient-to-br from-[#900C3F] to-[#581845] text-white p-8 rounded-[2.5rem] shadow-xl shadow-[#900C3F]/30 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group text-left relative overflow-hidden flex flex-col justify-center">
+                        <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:scale-110 duration-500">
+                            <Zap className="w-40 h-40 text-white" />
+                        </div>
+
+                        <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-6 text-white shadow-lg group-hover:scale-110 transition-transform duration-300 border border-white/20">
+                            <Zap className="w-8 h-8" />
+                        </div>
+                        <div className="relative z-10">
+                            <h2 className="text-3xl font-black mb-2">Auto-Join</h2>
+                            <p className="text-white/80 mb-8 font-medium">Connect instantly with devices on <br /><span className="font-bold text-white border-b border-white/30">Same WiFi</span>.</p>
+
+                            <button
+                                onClick={async () => {
+                                    try {
+                                        const res = await fetch(`${import.meta.env.VITE_SERVER_URL || 'http://localhost:3000'}/api/auto-join`);
+                                        const data = await res.json();
+                                        if (data.success) {
+                                            window.location.href = `/room/${data.roomId}`;
+                                        }
+                                    } catch (err) {
+                                        console.error(err);
+                                        alert("Auto-join failed. Please create a room manually.");
+                                    }
+                                }}
+                                className="w-full py-4 bg-white text-[#900C3F] rounded-xl font-bold text-lg shadow-lg hover:bg-gray-50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                            >
+                                <Zap className="w-5 h-5 fill-current" /> Join Network
+                            </button>
+                        </div>
                     </div>
 
                 </div>

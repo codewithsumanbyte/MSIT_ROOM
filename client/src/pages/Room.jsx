@@ -7,6 +7,7 @@ import EmojiPicker from 'emoji-picker-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import LoadingScreen from '../components/LoadingScreen';
 
 
 const Room = () => {
@@ -16,8 +17,13 @@ const Room = () => {
         userId,
         messages,
         files,
+        users, // Live users list
+        uploadProgress, // 0-100
+        isUploading,
+        isOwner,
         sendMessage,
         uploadFile,
+        clearRoom,
         socket,
         joinRoom
     } = useRoom();
@@ -31,11 +37,31 @@ const Room = () => {
     const emojiPickerRef = useRef(null);
     const textareaRef = useRef(null);
     const [currentTime, setCurrentTime] = useState(Date.now());
+    const [isDragging, setIsDragging] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        // Simulate premium loading experience
+        const timer = setTimeout(() => {
+            setIsLoading(false);
+        }, 2000);
+        return () => clearTimeout(timer);
+    }, []);
 
     useEffect(() => {
         const interval = setInterval(() => setCurrentTime(Date.now()), 1000);
         return () => clearInterval(interval);
     }, []);
+
+    // Helper to generate consistent color from string
+    const stringToColor = (str) => {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+        return '#' + '00000'.substring(0, 6 - c.length) + c;
+    };
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -87,20 +113,58 @@ const Room = () => {
         }
     };
 
-    const handleFileUpload = (e) => {
-        const file = e.target.files[0];
-        if (file) {
+    const handleFileUpload = async (e) => {
+        const filesToUpload = e.target.files ? Array.from(e.target.files) : [];
+        if (filesToUpload.length === 0) return;
+
+        for (const file of filesToUpload) {
             if (file.size > 500 * 1024 * 1024) {
-                toast.error('File too large (Max 500MB)');
-                return;
+                toast.error(`File ${file.name} too large (Max 500MB)`);
+                continue;
             }
-            const promise = uploadFile(file);
-            toast.promise(promise, {
-                loading: 'Uploading...',
-                success: 'File sent to Sidebar!',
-                error: 'Upload failed'
-            });
-            // Open sidebar on mobile on upload to show where file went
+            try {
+                // We await each upload for now to show sequential progress
+                // Or we could fire all at once, but the single progress bar in context would flicker.
+                // For MVP, sequential is safer for the progress bar.
+                await uploadFile(file);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+        setShowSidebar(true);
+    };
+
+    const handleDragEnter = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
+    const handleDrop = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length > 0) {
+            for (const file of files) {
+                if (file.size > 500 * 1024 * 1024) {
+                    toast.error(`File ${file.name} too large (Max 500MB)`);
+                    continue;
+                }
+                await uploadFile(file);
+            }
             setShowSidebar(true);
         }
     };
@@ -135,8 +199,26 @@ const Room = () => {
 
     const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
 
+    if (isLoading) {
+        return <LoadingScreen />;
+    }
+
     return (
-        <div className="flex flex-col h-[100dvh] bg-gray-50 font-sans overflow-hidden relative">
+        <div
+            className="flex flex-col h-[100dvh] bg-gray-50 font-sans overflow-hidden relative"
+            onDragEnter={handleDragEnter}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+        >
+            {/* Drag Overlay */}
+            {isDragging && (
+                <div className="absolute inset-0 z-50 bg-[#900C3F]/90 flex flex-col items-center justify-center text-white backdrop-blur-sm animate-fade-in border-4 border-white border-dashed m-4 rounded-3xl pointer-events-none">
+                    <Download className="w-24 h-24 mb-4 animate-bounce" />
+                    <h2 className="text-4xl font-black">Drop Files Here</h2>
+                    <p className="text-xl opacity-80 mt-2">to upload instantly</p>
+                </div>
+            )}
 
             {/* Header - Maroon Theme */}
             <header className="flex-none h-16 bg-[#900C3F] flex items-center justify-between px-4 z-40 text-white shadow-md relative">
@@ -146,14 +228,29 @@ const Room = () => {
                     </button>
                     <div className="flex flex-col cursor-pointer" onClick={() => setShowSidebar(!showSidebar)}>
                         <h1 className="font-bold text-lg leading-tight">Room {roomId}</h1>
-                        <p className="text-xs text-white/80">Tap for info</p>
+                        <div className="flex items-center gap-2 text-xs text-white/80">
+                            {/* Live Users Avatars */}
+                            <div className="flex -space-x-2">
+                                {users.map((u, i) => (
+                                    <div
+                                        key={u.socketId}
+                                        className="w-5 h-5 rounded-full border border-[#900C3F] flex items-center justify-center text-[8px] font-bold text-white shadow-sm"
+                                        style={{ backgroundColor: stringToColor(u.id) }}
+                                        title={u.id}
+                                    >
+                                        {u.id.substring(5, 7).toUpperCase()}
+                                    </div>
+                                ))}
+                            </div>
+                            <span>{users.length} Online</span>
+                        </div>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => setShowQR(true)}
-                        className="p-2 hover:bg-black/10 rounded-full transition-colors hidden md:block"
+                        className="p-2 hover:bg-black/10 rounded-full transition-colors"
                         title="Show QR Code"
                     >
                         <QrCode className="w-5 h-5" />
@@ -217,7 +314,16 @@ const Room = () => {
                                         `}>
 
                                             {isCodeBlock ? (
-                                                <div className="rounded-md overflow-hidden my-1 border border-white/20 text-xs md:text-sm">
+                                                <div className="rounded-md overflow-hidden my-1 border border-white/20 text-xs md:text-sm relative group/code">
+                                                    <div className="absolute top-2 right-2 opacity-0 group-hover/code:opacity-100 transition-opacity z-10">
+                                                        <button
+                                                            onClick={() => copyMessage(item.text)}
+                                                            className="p-1 bg-gray-700/50 hover:bg-gray-700 text-white rounded-md backdrop-blur-sm transition-colors"
+                                                            title="Copy Code"
+                                                        >
+                                                            <Copy className="w-3 h-3" />
+                                                        </button>
+                                                    </div>
                                                     <SyntaxHighlighter
                                                         language="javascript"
                                                         style={vscDarkPlus}
@@ -228,17 +334,19 @@ const Room = () => {
                                                     </SyntaxHighlighter>
                                                 </div>
                                             ) : (
-                                                <p className={`whitespace-pre-wrap leading-relaxed break-words text-sm md:text-base ${isMe ? 'text-white' : 'text-gray-800'}`}>{item.text}</p>
+                                                <p className={`whitespace-pre-wrap leading-relaxed break-all md:break-words text-sm md:text-base ${isMe ? 'text-white' : 'text-gray-800'}`}>{item.text}</p>
                                             )}
 
-                                            {/* Copy Button */}
-                                            <button
-                                                onClick={() => copyMessage(item.text)}
-                                                className={`absolute top-2 right-2 p-1.5 rounded-full hover:bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity ${isMe ? 'text-white' : 'text-gray-500'}`}
-                                                title="Copy Content"
-                                            >
-                                                <Copy className="w-3 h-3" />
-                                            </button>
+                                            {/* Copy Button - Always visible on mobile, hover on desktop */}
+                                            {!isCodeBlock && (
+                                                <button
+                                                    onClick={() => copyMessage(item.text)}
+                                                    className={`absolute top-2 right-2 p-1.5 rounded-full hover:bg-black/20 md:opacity-0 md:group-hover:opacity-100 opacity-100 transition-opacity ${isMe ? 'text-white/80 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}
+                                                    title="Copy Content"
+                                                >
+                                                    <Copy className="w-3 h-3" />
+                                                </button>
+                                            )}
 
                                             <div className={`flex items-center justify-end gap-1 text-[10px] mt-1 select-none ${isMe ? 'text-white/70' : 'text-gray-400'}`}>
                                                 {expiry && <span className="flex items-center gap-0.5 opacity-70"><Clock className="w-3 h-3" /> {expiry}</span>}
@@ -250,6 +358,89 @@ const Room = () => {
                             );
                         })}
                         <div ref={messagesEndRef} />
+                    </div>
+
+                    {/* Input Area - Fixed at bottom for mobile reliability */}
+                    <div className={`
+                        flex-none bg-white p-3 border-t border-gray-200 z-50 pb-[max(1.5rem,env(safe-area-inset-bottom))] md:pb-[max(0.75rem,env(safe-area-inset-bottom))] relative
+                        transition-all duration-300 ease-in-out transform
+                        ${showSidebar ? 'translate-y-full opacity-0 pointer-events-none lg:translate-y-0 lg:opacity-100 lg:pointer-events-auto' : 'translate-y-0 opacity-100 pointer-events-auto'}
+                    `}>
+
+                        {/* Upload Progress Bar */}
+                        {isUploading && (
+                            <div className="absolute top-0 left-0 right-0 h-1 bg-gray-100">
+                                <div
+                                    className="h-full bg-[#900C3F] transition-all duration-300 ease-out"
+                                    style={{ width: `${uploadProgress}%` }}
+                                />
+                            </div>
+                        )}
+
+                        <div className="max-w-7xl mx-auto flex items-end gap-2 relative">
+
+                            {/* Emoji Picker */}
+                            {showEmojiPicker && (
+                                <div className="absolute bottom-full right-16 mb-4 z-50 shadow-2xl rounded-2xl" ref={emojiPickerRef}>
+                                    <EmojiPicker
+                                        onEmojiClick={(emojiObject) => setNewMessage(prev => prev + emojiObject.emoji)}
+                                        theme="light"
+                                        searchDisabled={true}
+                                        width={300}
+                                        height={400}
+                                        previewConfig={{ showPreview: false }}
+                                    />
+                                </div>
+                            )}
+
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                className="hidden"
+                                onChange={handleFileUpload}
+                            />
+
+                            {/* 1. Paperclip (Left) */}
+                            <button
+                                onClick={() => fileInputRef.current?.click()}
+                                className="p-3 text-gray-400 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0 mb-1"
+                                title="Upload File"
+                            >
+                                <Paperclip className="w-6 h-6" />
+                            </button>
+
+                            {/* 2. Input Field (Center-Left) */}
+                            <div className="flex-1 bg-gray-50 rounded-2xl flex items-center px-4 py-2 focus-within:ring-2 focus-within:ring-[#900C3F]/20 transition-all border border-transparent focus-within:border-[#900C3F]/30">
+                                <textarea
+                                    ref={textareaRef}
+                                    value={newMessage}
+                                    onChange={(e) => setNewMessage(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    placeholder="Type a message..."
+                                    rows={1}
+                                    className="flex-1 bg-transparent py-2 outline-none text-gray-900 placeholder:text-gray-400 min-w-0 text-base resize-none max-h-32 scrollbar-thin scrollbar-thumb-gray-300"
+                                    style={{ minHeight: '44px' }}
+                                />
+                            </div>
+
+                            {/* 3. Emoji Button (Right) */}
+                            <button
+                                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                className={`p-3 rounded-full transition-colors flex-shrink-0 mb-1 ${showEmojiPicker ? 'text-[#900C3F]' : 'text-gray-400 hover:bg-gray-100'}`}
+                                title="Add Emoji"
+                            >
+                                <Smile className="w-6 h-6" />
+                            </button>
+
+                            {/* 4. Send Button (Far Right) */}
+                            <button
+                                onClick={handleSend}
+                                disabled={!newMessage.trim()}
+                                className="p-3 bg-[#900C3F] text-white rounded-2xl shadow-lg shadow-[#900C3F]/20 hover:bg-[#700931] hover:scale-105 active:scale-95 transition-all flex-shrink-0 disabled:opacity-50 disabled:scale-100 disabled:shadow-none mb-1"
+                            >
+                                <Send className="w-5 h-5" />
+                            </button>
+                        </div>
                     </div>
                 </main>
 
@@ -269,13 +460,14 @@ const Room = () => {
                     lg:static lg:transform-none lg:shadow-xl lg:z-20
                     ${showSidebar ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
                 `}>
-                    <div className="p-6 bg-gray-50 border-b border-gray-100 text-center flex-none relative">
+                    <div className="p-6 bg-gray-50 border-b border-gray-100 text-center flex-none relative group/sidebar-header">
                         <button
                             onClick={() => setShowSidebar(false)}
                             className="absolute top-4 left-4 p-2 text-gray-400 hover:text-gray-600 lg:hidden"
                         >
                             <X className="w-5 h-5" />
                         </button>
+
                         <div className="w-16 h-16 bg-[#900C3F]/10 rounded-full flex items-center justify-center mx-auto mb-3">
                             <Share2 className="w-8 h-8 text-[#900C3F]" />
                         </div>
@@ -283,7 +475,7 @@ const Room = () => {
                         <p className="text-xs text-gray-500 mt-1">Files appear here</p>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-4 bg-gray-50/30">
+                    <div className="flex-1 overflow-y-auto p-4 bg-gray-50/30 min-h-0 overscroll-contain">
                         {files.length === 0 && (
                             <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-2 opacity-60">
                                 <FileText className="w-12 h-12" />
@@ -291,7 +483,7 @@ const Room = () => {
                             </div>
                         )}
 
-                        <div className="space-y-3">
+                        <div className="space-y-3 pb-24 lg:pb-0"> {/* Extra padding for mobile bottom */}
                             {files.map((file, i) => (
                                 <div key={i} className="flex gap-3 items-start p-3 bg-white border border-gray-100 shadow-sm rounded-xl hover:shadow-md transition-all cursor-pointer group" onClick={() => window.open(`${SERVER_URL}${file.url}`, '_blank')}>
                                     <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
@@ -338,69 +530,7 @@ const Room = () => {
 
             </div>
 
-            {/* Input Area - Fixed at bottom for mobile reliability */}
-            <div className="flex-none bg-white p-3 border-t border-gray-200 z-50 pb-[max(1.5rem,env(safe-area-inset-bottom))] md:pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-                <div className="max-w-7xl mx-auto flex items-end gap-2 relative">
 
-                    {/* Emoji Picker */}
-                    {showEmojiPicker && (
-                        <div className="absolute bottom-full left-0 mb-4 z-50 shadow-2xl rounded-2xl" ref={emojiPickerRef}>
-                            <EmojiPicker
-                                onEmojiClick={(emojiObject) => setNewMessage(prev => prev + emojiObject.emoji)}
-                                theme="light"
-                                searchDisabled={true}
-                                width={300}
-                                height={400}
-                                previewConfig={{ showPreview: false }}
-                            />
-                        </div>
-                    )}
-
-                    <input
-                        type="file"
-                        ref={fileInputRef}
-                        className="hidden"
-                        onChange={handleFileUpload}
-                    />
-
-                    <button
-                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                        className={`p-3 rounded-full transition-colors flex-shrink-0 mb-1 ${showEmojiPicker ? 'text-[#900C3F]' : 'text-gray-400 hover:bg-gray-100'}`}
-                        title="Add Emoji"
-                    >
-                        <Smile className="w-6 h-6" />
-                    </button>
-
-                    <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="p-3 text-gray-400 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0 mb-1"
-                        title="Upload File"
-                    >
-                        <Paperclip className="w-6 h-6" />
-                    </button>
-
-                    <div className="flex-1 bg-gray-50 rounded-2xl flex items-center px-4 py-2 focus-within:ring-2 focus-within:ring-[#900C3F]/20 transition-all border border-transparent focus-within:border-[#900C3F]/30">
-                        <textarea
-                            ref={textareaRef}
-                            value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                            placeholder="Type a message..."
-                            rows={1}
-                            className="flex-1 bg-transparent py-2 outline-none text-gray-900 placeholder:text-gray-400 min-w-0 text-base resize-none max-h-32 scrollbar-thin scrollbar-thumb-gray-300"
-                            style={{ minHeight: '44px' }}
-                        />
-                    </div>
-
-                    <button
-                        onClick={handleSend}
-                        disabled={!newMessage.trim()}
-                        className="p-3 bg-[#900C3F] text-white rounded-2xl shadow-lg shadow-[#900C3F]/20 hover:bg-[#700931] hover:scale-105 active:scale-95 transition-all flex-shrink-0 disabled:opacity-50 disabled:scale-100 disabled:shadow-none mb-1"
-                    >
-                        <Send className="w-5 h-5" />
-                    </button>
-                </div>
-            </div>
 
             {/* QR Code Modal - Maroon Theme */}
             {showQR && (

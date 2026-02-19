@@ -15,7 +15,9 @@ export const RoomProvider = ({ children }) => {
     const [userId, setUserId] = useState(null);
     const [messages, setMessages] = useState([]);
     const [files, setFiles] = useState([]);
-    const [users, setUsers] = useState([]); // Simplified count or list
+    const [users, setUsers] = useState([]);
+    const [uploadProgress, setUploadProgress] = useState(0); // Simple 0-100 for now, or could map by file
+    const [isUploading, setIsUploading] = useState(false);
     const navigate = useNavigate();
 
     // Initialize user ID only once
@@ -58,11 +60,16 @@ export const RoomProvider = ({ children }) => {
             toast(`${joinedUserId === userId ? 'You' : 'A user'} joined the room`, { icon: '👋' });
         });
 
+        socket.on('room_users_update', (updatedUsers) => {
+            setUsers(updatedUsers);
+        });
+
         return () => {
             socket.off('connect');
             socket.off('receive_message');
             socket.off('file_uploaded');
             socket.off('user_joined');
+            socket.off('room_users_update');
         };
     }, [socket, userId]);
 
@@ -85,6 +92,7 @@ export const RoomProvider = ({ children }) => {
                 setRoomCode(code);
                 setMessages(response.messages || []);
                 setFiles(response.files || []);
+                setUsers(response.users || []);
                 navigate(`/room/${code}`);
                 toast.success('Joined room successfully!');
             } else {
@@ -98,28 +106,50 @@ export const RoomProvider = ({ children }) => {
         socket.emit('send_message', { roomCode, message: text, userId });
     };
 
-    const uploadFile = async (file) => {
+    const uploadFile = (file) => {
         if (!roomCode || !userId) return;
 
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('roomCode', roomCode);
-        formData.append('userId', userId);
+        return new Promise((resolve, reject) => {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('roomCode', roomCode);
+            formData.append('userId', userId);
 
-        try {
+            const xhr = new XMLHttpRequest();
             const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
-            const response = await fetch(`${SERVER_URL}/upload`, {
-                method: 'POST',
-                body: formData,
-            });
 
-            if (!response.ok) throw new Error('Upload failed');
+            xhr.open('POST', `${SERVER_URL}/upload`, true);
 
-            // Success handled by socket event 'file_uploaded'
-        } catch (error) {
-            console.error(error);
-            toast.error('File upload failed');
-        }
+            xhr.upload.onprogress = (event) => {
+                if (event.lengthComputable) {
+                    const percentComplete = Math.round((event.loaded / event.total) * 100);
+                    setUploadProgress(percentComplete);
+                    setIsUploading(true);
+                }
+            };
+
+            xhr.onload = () => {
+                setIsUploading(false);
+                setUploadProgress(0);
+                if (xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    // Socket event will handle file addition
+                    resolve(response);
+                } else {
+                    reject(new Error('Upload failed'));
+                    toast.error('Upload failed');
+                }
+            };
+
+            xhr.onerror = () => {
+                setIsUploading(false);
+                setUploadProgress(0);
+                reject(new Error('Upload failed'));
+                toast.error('Upload failed');
+            };
+
+            xhr.send(formData);
+        });
     };
 
     const value = {
@@ -128,6 +158,9 @@ export const RoomProvider = ({ children }) => {
         userId,
         messages,
         files,
+        users,
+        uploadProgress,
+        isUploading,
         createRoom,
         joinRoom,
         sendMessage,

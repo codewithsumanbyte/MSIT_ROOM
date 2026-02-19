@@ -176,6 +176,45 @@ const HowItWorks = () => {
                     </div>
                 </section>
 
+                {/* Step 4: PWA */}
+                <section className="mb-32 grid md:grid-cols-2 gap-12 items-center group">
+                    <div className="order-2 md:order-1 transition-transform duration-500 group-hover:-translate-y-2">
+                        <div className="bg-gradient-to-br from-[#900C3F] to-[#581845] p-12 rounded-[2rem] shadow-xl text-white flex flex-col items-center text-center relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
+
+                            <div className="bg-white/10 p-6 rounded-3xl mb-6 backdrop-blur-md shadow-inner border border-white/20">
+                                <Layout className="w-16 h-16 text-white" />
+                            </div>
+                            <h3 className="text-2xl font-black mb-2">Install App</h3>
+                            <p className="opacity-80 mb-8 max-w-xs mx-auto font-medium">Get the native app experience. Works offline. Full screen.</p>
+                            <button className="bg-white text-[#900C3F] px-8 py-3 rounded-xl font-bold hover:bg-gray-100 hover:scale-105 transition-all shadow-lg flex items-center gap-2">
+                                <Users className="w-5 h-5" /> Install Now
+                            </button>
+                        </div>
+                    </div>
+                    <div className="order-1 md:order-2">
+                        <span className="text-[#900C3F] font-black text-6xl opacity-10 block mb-4 -ml-2 select-none">App</span>
+                        <h2 className="text-3xl font-black text-[#581845] mb-4">Installable Web App (PWA)</h2>
+                        <p className="text-gray-500 text-lg leading-relaxed mb-6">
+                            It installs like a normal mobile app. No app store required.
+                        </p>
+                        <ul className="space-y-4 text-gray-600 font-medium">
+                            <li className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                <div className="w-8 h-8 bg-[#900C3F]/10 rounded-full text-[#900C3F] flex items-center justify-center font-bold">1</div>
+                                <span>Open site on your phone.</span>
+                            </li>
+                            <li className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                <div className="w-8 h-8 bg-[#900C3F]/10 rounded-full text-[#900C3F] flex items-center justify-center font-bold">2</div>
+                                <span>Click <span className="text-[#900C3F] font-bold">"Install App"</span> or "Add to Home Screen".</span>
+                            </li>
+                            <li className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                <div className="w-8 h-8 bg-[#900C3F]/10 rounded-full text-[#900C3F] flex items-center justify-center font-bold">3</div>
+                                <span>Use it just like a native app.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </section>
+
                 {/* CTA */}
                 <div className="mt-32 text-center bg-[#581845] text-white rounded-[3rem] p-12 md:p-20 relative overflow-hidden shadow-2xl">
                     <div className="absolute top-0 right-0 w-96 h-96 bg-[#900C3F] rounded-full blur-[120px] opacity-60 -mr-20 -mt-20 animate-pulse"></div>

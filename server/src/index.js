@@ -13,6 +13,12 @@ const server = http.createServer(app);
 app.use(cors());
 app.use(express.json());
 
+// Add debug logger
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+});
+
 // Serve static files (uploads)
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
@@ -55,15 +61,17 @@ io.on('connection', (socket) => {
     socket.on('create_room', (data, callback) => {
         let cb = callback;
         let dur = 30; // Default 30 min
+        let ownerId = null;
 
         if (typeof data === 'function') {
             cb = data;
         } else if (data && typeof data === 'object') {
             dur = data.duration || 30;
+            ownerId = data.userId;
         }
 
-        const newRoom = roomStore.createRoom(dur);
-        if (cb) cb({ success: true, roomCode: newRoom.code });
+        const newRoom = roomStore.createRoom(dur, null, ownerId);
+        if (cb) cb({ success: true, roomCode: newRoom.code, isOwner: true });
     });
 
     socket.on('join_room', ({ roomCode, userId }, callback) => {
@@ -76,11 +84,14 @@ io.on('connection', (socket) => {
             callback({
                 success: true,
                 messages: room.messages,
-                files: room.files
+                files: room.files,
+                users: roomStore.getUsers(roomCode),
+                isOwner: room.ownerId === userId // Check ownership
             });
 
             // Notify others
             socket.to(roomCode).emit('user_joined', { userId });
+            io.to(roomCode).emit('room_users_update', roomStore.getUsers(roomCode));
         } else {
             callback({ success: false, error: "Room not found" });
         }
@@ -100,10 +111,67 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('clear_room', ({ roomCode }) => {
+        const success = roomStore.clearFiles(roomCode);
+        if (success) {
+            io.to(roomCode).emit('files_cleared');
+
+            // Optional: System message
+            const room = roomStore.getRoom(roomCode);
+            if (room) {
+                const msgData = {
+                    id: Date.now().toString(),
+                    text: '🧹 All files were cleared from the room.',
+                    userId: 'SYSTEM',
+                    timestamp: new Date().toISOString()
+                };
+                roomStore.addMessage(roomCode, msgData);
+                io.to(roomCode).emit('receive_message', msgData);
+            }
+        }
+    });
+
+    socket.on('disconnecting', () => {
+        // socket.rooms is a Set containing the socket ID and rooms
+        const rooms = Array.from(socket.rooms);
+        // We know room codes are 6 chars usually, or custom strings. 
+        // Filter out socket.id (which is one of the rooms)
+        rooms.forEach((roomCode) => {
+            if (roomCode !== socket.id) {
+                roomStore.removeUser(roomCode, socket.id);
+                // Emit update to that room
+                io.to(roomCode).emit('room_users_update', roomStore.getUsers(roomCode));
+                console.log(`User ${socket.id} left room ${roomCode}`);
+            }
+        });
+    });
+
     socket.on('disconnect', () => {
         console.log('User disconnected:', socket.id);
-        // Handle cleanup if needed
     });
+});
+
+
+
+// Auto-Join Endpoint
+app.get('/api/auto-join', (req, res) => {
+    console.log('Received Auto-Join Request');
+    let ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+
+    // Handle localhost/ipv6
+    if (ip === '::1' || ip === '::ffff:127.0.0.1') {
+        ip = '127.0.0.1';
+    }
+    console.log('Detected IP:', ip);
+
+    // Simple sanitization to create a safe room ID
+    const sanitizedIp = ip.replace(/[^a-zA-Z0-9]/g, '_');
+    const roomId = `NET_${sanitizedIp}`;
+
+    // Create or Get room for this IP (30 min default)
+    const room = roomStore.createRoom(30, roomId);
+
+    res.json({ success: true, roomId: room.code });
 });
 
 const PORT = process.env.PORT || 3000;

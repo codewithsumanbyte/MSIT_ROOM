@@ -9,4 +9,18 @@
     <priority>1.0</priority>
   </url>
 
+  <url>
+    <loc>https://msitroom.vercel.app/how-it-works</loc>
+    <lastmod>2026-02-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://msitroom.vercel.app/privacy</loc>
+    <lastmod>2026-02-19</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
 </urlset>
