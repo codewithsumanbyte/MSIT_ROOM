@@ -9,7 +9,6 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import LoadingScreen from '../components/LoadingScreen';
 import { Html5QrcodeScanner, Html5Qrcode } from "html5-qrcode";
-import API_BASE_URL from '../apiConfig';
 
 
 const Room = () => {
@@ -307,7 +306,7 @@ const Room = () => {
 
     const timeline = [...messages].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
-    const SERVER_URL = API_BASE_URL;
+    const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
 
     if (isLoading) {
         return <LoadingScreen />;

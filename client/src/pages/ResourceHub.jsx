@@ -14,7 +14,6 @@ import {
     Filter
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import API_BASE_URL from '../apiConfig';
 
 const ResourceHub = () => {
     const navigate = useNavigate();
@@ -32,7 +31,7 @@ const ResourceHub = () => {
 
     const fetchResources = async () => {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/resources`);
+            const response = await fetch('http://localhost:3000/api/admin/resources');
             const data = await response.json();
             setResources(data);
         } catch (error) {
@@ -43,7 +42,7 @@ const ResourceHub = () => {
     };
 
     const handleDownload = (res) => {
-        const url = `${API_BASE_URL}${res.url}`;
+        const url = `http://localhost:3000${res.url}`;
         const link = document.createElement('a');
         link.href = url;
         link.setAttribute('download', res.originalName);

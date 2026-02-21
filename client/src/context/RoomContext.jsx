@@ -2,7 +2,6 @@ import React, { createContext, useContext, useEffect, useState, useRef } from 'r
 import { io } from 'socket.io-client';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import API_BASE_URL from '../apiConfig';
 
 const RoomContext = createContext();
 
@@ -32,7 +31,7 @@ export const RoomProvider = ({ children }) => {
     }, []);
 
     // Initialize socket
-    const SERVER_URL = API_BASE_URL;
+    const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
 
     useEffect(() => {
         const newSocket = io(SERVER_URL);
@@ -124,7 +123,7 @@ export const RoomProvider = ({ children }) => {
             formData.append('userId', userId);
 
             const xhr = new XMLHttpRequest();
-            const SERVER_URL = API_BASE_URL;
+            const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
 
             xhr.open('POST', `${SERVER_URL}/upload`, true);
 

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Lock, ShieldCheck, AlertCircle, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import API_BASE_URL from '../apiConfig';
 
 const AdminLogin = () => {
     const [password, setPassword] = useState('');
@@ -14,7 +13,7 @@ const AdminLogin = () => {
         setLoading(true);
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/login`, {
+            const response = await fetch('http://localhost:3000/api/admin/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ password })
