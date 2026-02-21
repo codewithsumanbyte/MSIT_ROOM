@@ -19,6 +19,7 @@ const AdminDashboard = () => {
     const navigate = useNavigate();
     const [resources, setResources] = useState([]);
     const [loading, setLoading] = useState(false);
+    const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'https://msit-room-api.onrender.com';
 
     // Form State
     const [title, setTitle] = useState('');
@@ -48,7 +49,7 @@ const AdminDashboard = () => {
 
     const fetchResources = async () => {
         try {
-            const response = await fetch('http://localhost:3000/api/admin/resources');
+            const response = await fetch(`${SERVER_URL}/api/admin/resources`);
             const data = await response.json();
             setResources(data);
         } catch (error) {
@@ -74,8 +75,8 @@ const AdminDashboard = () => {
         formData.append('category', category);
 
         try {
-            console.log('Uploading to:', 'http://localhost:3000/api/admin/upload');
-            const response = await fetch('http://localhost:3000/api/admin/upload', {
+            console.log('Uploading to:', `${SERVER_URL}/api/admin/upload`);
+            const response = await fetch(`${SERVER_URL}/api/admin/upload`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
@@ -104,7 +105,7 @@ const AdminDashboard = () => {
         if (!window.confirm('Are you sure you want to delete this resource?')) return;
 
         try {
-            const response = await fetch(`http://localhost:3000/api/admin/resources/${id}`, {
+            const response = await fetch(`${SERVER_URL}/api/admin/resources/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('adminToken')}`

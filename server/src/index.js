@@ -26,6 +26,15 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // Admin & Resource Routes
 app.use('/api/admin', adminRoutes);
 
+// Root route / Health check
+app.get('/', (req, res) => {
+    res.json({
+        status: "active",
+        message: "MSIT_ROOM Server is running",
+        version: "1.0.0"
+    });
+});
+
 // Socket.io setup
 const io = new Server(server, {
     cors: {

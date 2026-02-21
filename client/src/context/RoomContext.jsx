@@ -31,7 +31,7 @@ export const RoomProvider = ({ children }) => {
     }, []);
 
     // Initialize socket
-    const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
+    const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'https://msit-room-api.onrender.com';
 
     useEffect(() => {
         const newSocket = io(SERVER_URL);

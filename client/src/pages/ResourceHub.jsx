@@ -21,6 +21,7 @@ const ResourceHub = () => {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeYear, setActiveYear] = useState('1st Year');
+    const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'https://msit-room-api.onrender.com';
 
     const years = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
     const categories = ['Organizer', 'Study Notes', 'PYQ'];
@@ -31,7 +32,7 @@ const ResourceHub = () => {
 
     const fetchResources = async () => {
         try {
-            const response = await fetch('http://localhost:3000/api/admin/resources');
+            const response = await fetch(`${SERVER_URL}/api/admin/resources`);
             const data = await response.json();
             setResources(data);
         } catch (error) {
@@ -42,7 +43,7 @@ const ResourceHub = () => {
     };
 
     const handleDownload = (res) => {
-        const url = `http://localhost:3000${res.url}`;
+        const url = `${SERVER_URL}${res.url}`;
         const link = document.createElement('a');
         link.href = url;
         link.setAttribute('download', res.originalName);

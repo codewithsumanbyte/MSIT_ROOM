@@ -263,7 +263,7 @@ const Room = () => {
 
     const timeline = [...messages].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
-    const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
+    const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'https://msit-room-api.onrender.com';
 
     if (isLoading) {
         return <LoadingScreen />;
