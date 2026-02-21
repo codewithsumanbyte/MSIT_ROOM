@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Zap, Shield, Clock, FileText, Send, Paperclip, Share2, Users, Layout, Lock } from 'lucide-react';
+import { ArrowLeft, Zap, Shield, Clock, FileText, Send, Paperclip, Share2, Users, Layout, Lock, ScanLine } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 const HowItWorks = () => {
@@ -147,7 +147,7 @@ const HowItWorks = () => {
                 </section>
 
                 {/* Step 3 */}
-                <section className="grid md:grid-cols-2 gap-12 items-center group">
+                <section className="mb-32 grid md:grid-cols-2 gap-12 items-center group">
                     <div className="order-2 md:order-1 transition-transform duration-500 group-hover:-translate-y-2">
                         <div className="bg-gray-50 p-12 rounded-[2rem] border border-gray-200 relative overflow-hidden shadow-inner flex flex-col items-center justify-center text-center">
                             <div className="relative mb-8 group-hover:scale-110 transition-transform duration-500">
@@ -170,9 +170,45 @@ const HowItWorks = () => {
                         <p className="text-gray-500 text-lg leading-relaxed mb-6">
                             When the timer hits zero, the room is deleted forever. No history logs, no saved files, no "restore" button.
                         </p>
-                        <p className="text-gray-500 text-lg leading-relaxed">
-                            It's simple: <span className="font-bold text-[#581845] bg-[#900C3F]/10 px-1">If it's not saved on your device, it's gone.</span>
+                        <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl text-amber-800 text-sm font-medium">
+                            <strong>Note:</strong> Messages and files within a room also have their own individual expiration timers for maximum security.
+                        </div>
+                    </div>
+                </section>
+
+                {/* Step 4: NEW - Common Room & QR */}
+                <section className="mb-32 grid md:grid-cols-2 gap-12 items-center group">
+                    <div>
+                        <span className="text-[#900C3F] font-black text-6xl opacity-10 block mb-4 -ml-2 select-none">04</span>
+                        <h2 className="text-3xl font-black text-[#581845] mb-4">Common Room & QR Scan</h2>
+                        <p className="text-gray-500 text-lg leading-relaxed mb-6">
+                            Need a permanent place? The <strong>AIML3 Common Room</strong> stays alive indefinitely, while keeping your messages fresh with automatic pruning.
                         </p>
+                        <ul className="space-y-4 text-gray-600 font-medium">
+                            <li className="flex items-center gap-3 bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                                <div className="p-2 bg-[#900C3F]/10 rounded-lg text-[#900C3F]"><ScanLine className="w-5 h-5 transition-transform group-hover:scale-110" /></div>
+                                <span><strong>QR Fast Join:</strong> Scan any room QR code to join instantly without typing.</span>
+                            </li>
+                            <li className="flex items-center gap-3 bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                                <div className="p-2 bg-[#900C3F]/10 rounded-lg text-[#900C3F]"><Users className="w-5 h-5" /></div>
+                                <span><strong>Persistent Hub:</strong> Join the AIML3 room for long-term collaboration.</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div className="transition-transform duration-500 group-hover:-translate-y-2">
+                        <div className="bg-gradient-to-br from-[#900C3F]/5 to-[#581845]/5 p-8 rounded-[2rem] border-2 border-dashed border-[#900C3F]/20 flex flex-col items-center justify-center">
+                            <div className="w-48 h-48 bg-white p-4 rounded-2xl shadow-xl border border-gray-100 relative group/qr">
+                                <div className="absolute inset-0 bg-[#900C3F]/5 opacity-0 group-hover/qr:opacity-100 transition-opacity flex items-center justify-center rounded-2xl">
+                                    <ScanLine className="w-12 h-12 text-[#900C3F] animate-pulse" />
+                                </div>
+                                <div className="w-full h-full bg-gray-50 rounded-lg border-2 border-gray-100 flex flex-wrap gap-1 p-2">
+                                    {[...Array(16)].map((_, i) => (
+                                        <div key={i} className={`w-8 h-8 rounded-sm ${i % 3 === 0 ? 'bg-[#900C3F]/20' : 'bg-gray-100'}`}></div>
+                                    ))}
+                                </div>
+                            </div>
+                            <p className="mt-6 text-xs text-gray-400 font-bold uppercase tracking-widest text-center">Scan any Room Code to Join Instantly</p>
+                        </div>
                     </div>
                 </section>
 

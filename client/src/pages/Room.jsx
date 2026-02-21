@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRoom } from '../context/RoomContext';
-import { Send, Paperclip, ArrowLeft, Download, FileText, Clock, MoreVertical, Copy, LogOut, File, Smile, QrCode, X, Check, Share2, Trash2 } from 'lucide-react';
+import { Send, Paperclip, ArrowLeft, Download, FileText, Clock, MoreVertical, Copy, LogOut, File, Smile, QrCode, X, Check, Share2, Trash2, ScanLine } from 'lucide-react';
 import toast from 'react-hot-toast';
 import EmojiPicker from 'emoji-picker-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import LoadingScreen from '../components/LoadingScreen';
+import { Html5QrcodeScanner, Html5Qrcode } from "html5-qrcode";
+import API_BASE_URL from '../apiConfig';
 
 
 const Room = () => {
@@ -39,6 +41,9 @@ const Room = () => {
     const [currentTime, setCurrentTime] = useState(Date.now());
     const [isDragging, setIsDragging] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [showScanner, setShowScanner] = useState(false);
+    const scannerRef = useRef(null);
+    const [vh, setVh] = useState(window.innerHeight * 0.01);
 
     useEffect(() => {
         // Simulate premium loading experience
@@ -51,6 +56,35 @@ const Room = () => {
     useEffect(() => {
         const interval = setInterval(() => setCurrentTime(Date.now()), 1000);
         return () => clearInterval(interval);
+    }, []);
+
+    // Visual Viewport Height Fix for Mobile (Realme/Samsung/iOS)
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.visualViewport) {
+                // Update the height variable based on the visual viewport
+                // This shifts the UI up when the keyboard appears
+                const height = window.visualViewport.height;
+                const offset = window.innerHeight - height;
+                document.documentElement.style.setProperty('--vvh', `${height}px`);
+                document.documentElement.style.setProperty('--vvo', `${offset}px`);
+                setVh(height * 0.01);
+            }
+        };
+
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', handleResize);
+            window.visualViewport.addEventListener('scroll', handleResize);
+            // Initial call
+            handleResize();
+        }
+
+        return () => {
+            if (window.visualViewport) {
+                window.visualViewport.removeEventListener('resize', handleResize);
+                window.visualViewport.removeEventListener('scroll', handleResize);
+            }
+        };
     }, []);
 
     // Helper to generate consistent color from string
@@ -188,16 +222,92 @@ const Room = () => {
         return `${minutes}m ${seconds}s`;
     };
 
-    // Detect if message is code-like
-    const isCode = (text) => {
-        const codeIndicators = ['const ', 'let ', 'var ', 'function', 'class ', 'import ', 'export ', '=>', '{', '}', ';', '</'];
+    // Detect if message is code-like and return the language
+    const detectCode = (text) => {
+        if (!text) return { isCode: false, language: 'javascript' };
+
+        const languages = [
+            { name: 'python', indicators: ['def ', 'print(', 'elif:', 'import os', 'import sys', 'if __name__ =='] },
+            { name: 'java', indicators: ['public class', 'private class', 'System.out.print', 'public static void', 'new String[]'] },
+            { name: 'cpp', indicators: ['#include', 'using namespace', 'int main(', 'printf(', 'cout <<'] },
+            { name: 'php', indicators: ['$this->', '<?php', 'echo "'] },
+            { name: 'css', indicators: ['body {', '.class {', '#id {', 'display:', 'margin:', 'padding:', 'color:', 'background:'] },
+            { name: 'html', indicators: ['<!DOCTYPE', '<html', '<head>', '<body', '</div>', '</span>'] },
+            { name: 'javascript', indicators: ['const ', 'let ', 'var ', 'function', 'import ', 'export ', '=>', 'console.', 'return '] }
+        ];
+
+        let detectedLang = 'javascript';
+        let foundIndicator = false;
+
+        for (const lang of languages) {
+            if (lang.indicators.some(ind => text.includes(ind))) {
+                detectedLang = lang.name;
+                foundIndicator = true;
+                break;
+            }
+        }
+
+        // Character based patterns (e.g., balanced braces, frequent semicolons)
+        const hasBraces = (text.match(/{/g) || []).length > 0 && (text.match(/}/g) || []).length > 0;
+        const hasSemicolons = (text.match(/;/g) || []).length > 0;
         const lines = text.split('\n');
-        return lines.length > 1 && codeIndicators.some(ind => text.includes(ind));
+
+        // Points system for detection
+        let points = 0;
+        if (foundIndicator) points += 2;
+        if (hasBraces) points += 1;
+        if (hasSemicolons) points += 1;
+        if (lines.length > 2) points += 1;
+
+        // Regex for function calls or variable assignments
+        const codePattern = /[a-zA-Z0-9_]+\s*\(.*\)|[a-zA-Z0-9_]+\s*=[^=]/;
+        if (codePattern.test(text)) points += 1;
+
+        return { isCode: points >= 2, language: detectedLang };
     };
 
-    const timeline = messages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    // QR Scanner Logic
+    useEffect(() => {
+        let html5QrCode;
+        if (showScanner) {
+            html5QrCode = new Html5Qrcode("reader");
+            const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+                // Check if it's a URL or a room code
+                try {
+                    const url = new URL(decodedText);
+                    if (url.pathname.startsWith('/room/')) {
+                        const code = url.pathname.split('/room/')[1];
+                        joinRoom(code);
+                        setShowScanner(false);
+                    }
+                } catch (e) {
+                    // Not a URL, try as a code
+                    if (decodedText.length === 6 || decodedText === 'AIML3') {
+                        joinRoom(decodedText.toUpperCase());
+                        setShowScanner(false);
+                    }
+                }
+            };
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
-    const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
+            html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback)
+                .catch(err => {
+                    console.error("Scanner error:", err);
+                    toast.error("Failed to start camera");
+                    setShowScanner(false);
+                });
+        }
+
+        return () => {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().catch(err => console.error("Scanner stop error:", err));
+            }
+        };
+    }, [showScanner]);
+
+    const timeline = [...messages].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+    const SERVER_URL = API_BASE_URL;
 
     if (isLoading) {
         return <LoadingScreen />;
@@ -205,7 +315,11 @@ const Room = () => {
 
     return (
         <div
-            className="flex flex-col h-[100dvh] bg-gray-50 font-sans overflow-hidden relative"
+            className="flex flex-col bg-gray-50 font-sans overflow-hidden relative"
+            style={{
+                height: 'var(--vvh, 100dvh)',
+                maxHeight: 'var(--vvh, 100dvh)'
+            }}
             onDragEnter={handleDragEnter}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -256,6 +370,13 @@ const Room = () => {
                         <QrCode className="w-5 h-5" />
                     </button>
                     <button
+                        onClick={() => setShowScanner(true)}
+                        className="p-2 hover:bg-black/10 rounded-full transition-colors md:hidden"
+                        title="Scan QR Code"
+                    >
+                        <ScanLine className="w-5 h-5 text-yellow-300 animate-pulse" />
+                    </button>
+                    <button
                         onClick={() => setShowSidebar(!showSidebar)}
                         className={`p-2 rounded-full transition-colors lg:hidden ${showSidebar ? 'bg-black/20' : 'hover:bg-black/10'}`}
                         title="Room Info"
@@ -299,7 +420,7 @@ const Room = () => {
                         {timeline.map((item, index) => {
                             const isMe = item.userId === userId || (!item.userId && item.senderId === userId);
                             const expiry = getExpiryString(item.expiresAt);
-                            const isCodeBlock = isCode(item.text);
+                            const { isCode: isCodeBlock, language: detectedLang } = detectCode(item.text);
 
                             return (
                                 <div key={index} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group w-full`}>
@@ -315,17 +436,18 @@ const Room = () => {
 
                                             {isCodeBlock ? (
                                                 <div className="rounded-md overflow-hidden my-1 border border-white/20 text-xs md:text-sm relative group/code">
-                                                    <div className="absolute top-2 right-2 opacity-0 group-hover/code:opacity-100 transition-opacity z-10">
+                                                    <div className="absolute top-2 right-2 opacity-0 group-hover/code:opacity-100 transition-opacity z-10 flex gap-2">
+
                                                         <button
                                                             onClick={() => copyMessage(item.text)}
-                                                            className="p-1 bg-gray-700/50 hover:bg-gray-700 text-white rounded-md backdrop-blur-sm transition-colors"
+                                                            className="p-1.5 bg-gray-700/50 hover:bg-gray-700 text-white rounded-md backdrop-blur-sm transition-colors"
                                                             title="Copy Code"
                                                         >
                                                             <Copy className="w-3 h-3" />
                                                         </button>
                                                     </div>
                                                     <SyntaxHighlighter
-                                                        language="javascript"
+                                                        language={detectedLang}
                                                         style={vscDarkPlus}
                                                         customStyle={{ margin: 0, padding: '0.75rem', borderRadius: '0.375rem', fontSize: '13px' }}
                                                         wrapLongLines={true}
@@ -377,7 +499,7 @@ const Room = () => {
                             </div>
                         )}
 
-                        <div className="max-w-7xl mx-auto flex items-end gap-2 relative">
+                        <div className="max-w-7xl mx-auto flex items-center gap-2 relative pr-4 md:pr-0">
 
                             {/* Emoji Picker */}
                             {showEmojiPicker && (
@@ -423,10 +545,10 @@ const Room = () => {
                                 />
                             </div>
 
-                            {/* 3. Emoji Button (Right) */}
+                            {/* 3. Emoji Button (Right) - Hidden on mobile to prevent cutout/overflow issues */}
                             <button
                                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                                className={`p-3 rounded-full transition-colors flex-shrink-0 mb-1 ${showEmojiPicker ? 'text-[#900C3F]' : 'text-gray-400 hover:bg-gray-100'}`}
+                                className={`p-3 rounded-full transition-colors flex-shrink-0 mb-1 hidden md:flex ${showEmojiPicker ? 'text-[#900C3F]' : 'text-gray-400 hover:bg-gray-100'}`}
                                 title="Add Emoji"
                             >
                                 <Smile className="w-6 h-6" />
@@ -532,6 +654,24 @@ const Room = () => {
 
 
 
+            {/* QR Scanner Modal */}
+            {showScanner && (
+                <div className="fixed inset-0 bg-black/90 z-[100] flex flex-col items-center justify-center p-4 backdrop-blur-md">
+                    <div className="w-full max-w-sm bg-white rounded-3xl overflow-hidden shadow-2xl relative">
+                        <div className="p-4 bg-[#900C3F] text-white flex justify-between items-center">
+                            <h3 className="font-bold">Scan Room QR</h3>
+                            <button onClick={() => setShowScanner(false)} className="p-1 hover:bg-white/20 rounded-full transition-colors">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+                        <div id="reader" className="w-full h-80 bg-black"></div>
+                        <div className="p-6 text-center">
+                            <p className="text-gray-500 text-sm">Scan another user's room QR code to join instantly</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* QR Code Modal - Maroon Theme */}
             {showQR && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setShowQR(false)}>
@@ -545,7 +685,7 @@ const Room = () => {
 
                         <div className="bg-white p-4 rounded-xl border-2 border-[#900C3F]/10 inline-block mb-6 shadow-inner">
                             <QRCodeSVG
-                                value={window.location.href}
+                                value={`https://msit-room.vercel.app/room/${roomId}`} // Ideally use absolute URL
                                 size={200}
                                 level="H"
                                 includeMargin={true}

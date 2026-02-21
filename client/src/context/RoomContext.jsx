@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useRef } from 'r
 import { io } from 'socket.io-client';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import API_BASE_URL from '../apiConfig';
 
 const RoomContext = createContext();
 
@@ -31,7 +32,7 @@ export const RoomProvider = ({ children }) => {
     }, []);
 
     // Initialize socket
-    const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
+    const SERVER_URL = API_BASE_URL;
 
     useEffect(() => {
         const newSocket = io(SERVER_URL);
@@ -64,18 +65,25 @@ export const RoomProvider = ({ children }) => {
             setUsers(updatedUsers);
         });
 
+        socket.on('content_pruned', ({ messages: newMessages, files: newFiles }) => {
+            setMessages(newMessages);
+            setFiles(newFiles);
+            toast('Old messages and files were automatically cleaned up.', { icon: '🧹' });
+        });
+
         return () => {
             socket.off('connect');
             socket.off('receive_message');
             socket.off('file_uploaded');
             socket.off('user_joined');
             socket.off('room_users_update');
+            socket.off('content_pruned');
         };
     }, [socket, userId]);
 
-    const createRoom = (duration = 30) => {
+    const createRoom = (duration = 30, isPermanent = false, customCode = null) => {
         if (!socket) return;
-        socket.emit('create_room', { duration }, (response) => {
+        socket.emit('create_room', { duration, isPermanent, roomCode: customCode }, (response) => {
             if (response.success) {
                 setRoomCode(response.roomCode);
                 joinRoom(response.roomCode);
@@ -116,7 +124,7 @@ export const RoomProvider = ({ children }) => {
             formData.append('userId', userId);
 
             const xhr = new XMLHttpRequest();
-            const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
+            const SERVER_URL = API_BASE_URL;
 
             xhr.open('POST', `${SERVER_URL}/upload`, true);
 
@@ -164,7 +172,9 @@ export const RoomProvider = ({ children }) => {
         createRoom,
         joinRoom,
         sendMessage,
-        uploadFile
+        uploadFile,
+        setMessages,
+        setFiles
     };
 
     return (

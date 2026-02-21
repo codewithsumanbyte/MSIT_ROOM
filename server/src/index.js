@@ -5,6 +5,7 @@ const cors = require('cors');
 const path = require('path');
 const roomStore = require('./roomStore');
 const upload = require('./fileUpload');
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -21,6 +22,9 @@ app.use((req, res, next) => {
 
 // Serve static files (uploads)
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// Admin & Resource Routes
+app.use('/api/admin', adminRoutes);
 
 // Socket.io setup
 const io = new Server(server, {
@@ -62,16 +66,20 @@ io.on('connection', (socket) => {
         let cb = callback;
         let dur = 30; // Default 30 min
         let ownerId = null;
+        let isPermanent = false;
+        let customCode = null;
 
         if (typeof data === 'function') {
             cb = data;
         } else if (data && typeof data === 'object') {
             dur = data.duration || 30;
             ownerId = data.userId;
+            isPermanent = data.isPermanent || false;
+            customCode = data.roomCode || null;
         }
 
-        const newRoom = roomStore.createRoom(dur, null, ownerId);
-        if (cb) cb({ success: true, roomCode: newRoom.code, isOwner: true });
+        const room = roomStore.createRoom(dur, customCode, ownerId, isPermanent);
+        if (cb) cb({ success: true, roomCode: room.code, isOwner: true });
     });
 
     socket.on('join_room', ({ roomCode, userId }, callback) => {
@@ -104,7 +112,7 @@ io.on('connection', (socket) => {
                 id: Date.now().toString(), // Simple ID
                 text: message,
                 userId,
-                timestamp: new Date().toISOString()
+                timestamp: Date.now()
             };
             roomStore.addMessage(roomCode, msgData);
             io.to(roomCode).emit('receive_message', msgData);
@@ -123,7 +131,7 @@ io.on('connection', (socket) => {
                     id: Date.now().toString(),
                     text: '🧹 All files were cleared from the room.',
                     userId: 'SYSTEM',
-                    timestamp: new Date().toISOString()
+                    timestamp: Date.now()
                 };
                 roomStore.addMessage(roomCode, msgData);
                 io.to(roomCode).emit('receive_message', msgData);
@@ -153,26 +161,21 @@ io.on('connection', (socket) => {
 
 
 
-// Auto-Join Endpoint
-app.get('/api/auto-join', (req, res) => {
-    console.log('Received Auto-Join Request');
-    let ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
-
-    // Handle localhost/ipv6
-    if (ip === '::1' || ip === '::ffff:127.0.0.1') {
-        ip = '127.0.0.1';
-    }
-    console.log('Detected IP:', ip);
-
-    // Simple sanitization to create a safe room ID
-    const sanitizedIp = ip.replace(/[^a-zA-Z0-9]/g, '_');
-    const roomId = `NET_${sanitizedIp}`;
-
-    // Create or Get room for this IP (30 min default)
-    const room = roomStore.createRoom(30, roomId);
-
-    res.json({ success: true, roomId: room.code });
-});
+// Cleanup interval for permanent rooms to notify clients when content expires
+setInterval(() => {
+    roomStore.rooms.forEach((room, code) => {
+        if (room.isPermanent) {
+            const pruned = roomStore.pruneExpiredContent(code);
+            if (pruned) {
+                // Notify clients in the room to refresh their content
+                io.to(code).emit('content_pruned', {
+                    messages: room.messages,
+                    files: room.files
+                });
+            }
+        }
+    });
+}, 30000); // Check every 30 seconds
 
 const PORT = process.env.PORT || 3000;
 

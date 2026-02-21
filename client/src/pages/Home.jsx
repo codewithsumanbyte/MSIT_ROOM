@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useRoom } from '../context/RoomContext';
 import LoadingScreen from '../components/LoadingScreen';
-import { ArrowRight, Clock, Users, Zap, Star, Quote, Shield, FileText, Share2, Trash2, Github, Linkedin, ExternalLink } from 'lucide-react';
+import { ArrowRight, Clock, Users, Zap, Star, Quote, Shield, FileText, Share2, Trash2, Github, Linkedin, ExternalLink, Calculator, Plus, BookOpen } from 'lucide-react';
 
 const testimonials = [
     { name: "Sourin Roy", text: "The fastest way to share files effortlessly. Seamless experience!", role: "Student" },
     { name: "Bibek Biswas", text: "I love the auto-delete feature. Keeps everything clean and secure.", role: "Student" },
     { name: "Raj Ghorui", text: "Finally, a room app that doesn't require a login. Amazing UI!", role: "Student" },
-    { name: "Supriti Bag", text: "Works perfectly on my phone. The best file sharing tool for students.", role: "Student" }
 ];
 
 const Home = () => {
+    const navigate = useNavigate();
     const { createRoom, joinRoom } = useRoom();
     const [joinCode, setJoinCode] = useState('');
     const [duration, setDuration] = useState(30);
@@ -67,6 +67,10 @@ const Home = () => {
                     <img src="/logo.svg" alt="MSIT Room Logo" className="w-12 h-12 transition-transform duration-500 group-hover:rotate-12 drop-shadow-xl" />
                     <span className="text-2xl font-black tracking-tight text-[#581845] hidden md:block group-hover:text-[#900C3F] transition-colors">MSIT ROOM</span>
                 </div>
+                <div className="flex items-center gap-6">
+                    <Link to="/resource-hub" className="text-gray-600 hover:text-[#900C3F] transition-colors font-bold text-sm">Academic Hub</Link>
+                    <Link to="/more-features" className="text-gray-600 hover:text-[#900C3F] transition-colors font-bold text-sm">GPA Calculator</Link>
+                </div>
             </header>
 
             <main className="flex-1 flex flex-col items-center pt-12 pb-12 px-6 text-center max-w-6xl mx-auto w-full z-10">
@@ -83,7 +87,7 @@ const Home = () => {
                     </p>
                     <div className="pt-4">
                         <Link to="/how-it-works" className="inline-flex items-center gap-2 text-[#900C3F] font-bold border-b-2 border-[#900C3F]/20 hover:border-[#900C3F] transition-colors pb-1 text-sm md:text-base">
-                            <Zap className="w-4 h-4" /> See How It Works
+                            <BookOpen className="w-4 h-4" /> How it Works
                         </Link>
                     </div>
                 </div>
@@ -161,85 +165,53 @@ const Home = () => {
                         </form>
                     </div>
 
-                    {/* Auto-Join Card */}
-                    <div className="md:col-span-2 lg:col-span-1 bg-gradient-to-br from-[#900C3F] to-[#581845] text-white p-8 rounded-[2.5rem] shadow-xl shadow-[#900C3F]/30 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group text-left relative overflow-hidden flex flex-col justify-center">
+                    {/* Common Room Card */}
+                    <div className="bg-gradient-to-br from-[#900C3F] to-[#581845] text-white p-8 rounded-[2.5rem] shadow-xl shadow-[#900C3F]/30 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group text-left relative overflow-hidden flex flex-col justify-center">
                         <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:scale-110 duration-500">
-                            <Zap className="w-40 h-40 text-white" />
+                            <Users className="w-40 h-40 text-white" />
                         </div>
 
                         <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-6 text-white shadow-lg group-hover:scale-110 transition-transform duration-300 border border-white/20">
-                            <Zap className="w-8 h-8" />
+                            <Star className="w-8 h-8" />
                         </div>
                         <div className="relative z-10">
-                            <h2 className="text-3xl font-black mb-2">Auto-Join</h2>
-                            <p className="text-white/80 mb-8 font-medium">Connect instantly with devices on <br /><span className="font-bold text-white border-b border-white/30">Same WiFi</span>.</p>
+                            <h2 className="text-3xl font-black mb-2">Common Room</h2>
+                            <p className="text-white/80 mb-8 font-medium">Join this room without any <br /><span className="font-bold text-white border-b border-white/30">Code</span>. Always Active Room.</p>
 
                             <button
-                                onClick={async () => {
-                                    try {
-                                        const res = await fetch(`${import.meta.env.VITE_SERVER_URL || 'http://localhost:3000'}/api/auto-join`);
-                                        const data = await res.json();
-                                        if (data.success) {
-                                            window.location.href = `/room/${data.roomId}`;
-                                        }
-                                    } catch (err) {
-                                        console.error(err);
-                                        alert("Auto-join failed. Please create a room manually.");
-                                    }
+                                onClick={() => {
+                                    // Join room AIML3 as a permanent room
+                                    createRoom(30, true, 'AIML3');
                                 }}
                                 className="w-full py-4 bg-white text-[#900C3F] rounded-xl font-bold text-lg shadow-lg hover:bg-gray-50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                             >
-                                <Zap className="w-5 h-5 fill-current" /> Join Network
+                                <Users className="w-5 h-5 fill-current" /> Common Room
                             </button>
                         </div>
                     </div>
 
-                </div>
-
-                {/* Visual Features Section - CSS "Images" */}
-                <div className="grid md:grid-cols-3 gap-8 w-full max-w-6xl mb-24 px-4">
-
-                    {/* Feature 1: Speed */}
-                    <div className="group relative p-8 rounded-[2rem] bg-gradient-to-br from-white to-gray-50 border border-gray-100 shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-hidden text-left">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-[#900C3F]/5 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-150 duration-500"></div>
-                        <div className="w-16 h-16 bg-[#F5E6EC] rounded-2xl flex items-center justify-center mb-6 text-[#900C3F] group-hover:rotate-12 transition-transform duration-300 shadow-inner">
-                            <Zap className="w-8 h-8 fill-current" />
+                    {/* Academic Tools Card */}
+                    <div className="bg-white border-2 border-gray-100 p-8 rounded-[2.5rem] shadow-xl shadow-gray-200/50 hover:shadow-2xl hover:shadow-[#900C3F]/20 hover:-translate-y-2 transition-all duration-300 group text-left relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
+                            <Calculator className="w-40 h-40 text-[#581845]" />
                         </div>
-                        <h3 className="text-2xl font-black text-[#581845] mb-3">Lightning Fast</h3>
-                        <p className="text-gray-500 font-medium leading-relaxed">
-                            No login? Check. <br />
-                            No setup? Check. <br />
-                            Just create a room and start sharing in <span className="text-[#900C3F] font-bold">seconds</span>.
-                        </p>
+
+                        <div className="w-16 h-16 bg-[#581845]/10 rounded-2xl flex items-center justify-center mb-6 text-[#581845] group-hover:scale-110 transition-transform duration-300">
+                            <Calculator className="w-8 h-8" />
+                        </div>
+                        <div className="relative z-10">
+                            <h2 className="text-3xl font-black text-[#581845] mb-2">Academic Tools</h2>
+                            <p className="text-gray-500 mb-8 font-medium">Calculate your SGPA or <br /><span className="font-bold text-[#900C3F] border-b border-[#900C3F]/30 uppercase tracking-widest text-xs">Access Official Syllabus</span>.</p>
+
+                            <button
+                                onClick={() => navigate('/more-features')}
+                                className="w-full py-4 bg-[#581845] text-white rounded-xl font-bold text-lg shadow-lg hover:bg-[#900C3F] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                            >
+                                <Plus className="w-5 h-5" /> Explore Tools
+                            </button>
+                        </div>
                     </div>
 
-                    {/* Feature 2: Security */}
-                    <div className="group relative p-8 rounded-[2rem] bg-gradient-to-br from-[#900C3F] to-[#581845] text-white shadow-xl hover:shadow-2xl hover:shadow-[#900C3F]/30 hover:-translate-y-2 transition-all duration-300 overflow-hidden text-left transform md:scale-110 z-10">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-150 duration-500"></div>
-                        <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-6 text-white group-hover:rotate-12 transition-transform duration-300 shadow-inner">
-                            <Shield className="w-8 h-8 fill-current" />
-                        </div>
-                        <h3 className="text-2xl font-black mb-3">End-to-End Secure</h3>
-                        <p className="text-white/80 font-medium leading-relaxed">
-                            Your data travels encrypted. <br />
-                            Rooms <span className="font-bold text-white border-b-2 border-white/30">auto-destruct</span> after expiry. <br />
-                            Zero digital footprint left behind.
-                        </p>
-                    </div>
-
-                    {/* Feature 3: Anonymity */}
-                    <div className="group relative p-8 rounded-[2rem] bg-gradient-to-br from-white to-gray-50 border border-gray-100 shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-hidden text-left">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-[#900C3F]/5 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-150 duration-500"></div>
-                        <div className="w-16 h-16 bg-[#F5E6EC] rounded-2xl flex items-center justify-center mb-6 text-[#900C3F] group-hover:rotate-12 transition-transform duration-300 shadow-inner">
-                            <Users className="w-8 h-8 fill-current" />
-                        </div>
-                        <h3 className="text-2xl font-black text-[#581845] mb-3">True Anonymity</h3>
-                        <p className="text-gray-500 font-medium leading-relaxed">
-                            No email required. <br />
-                            No tracking cookies. <br />
-                            <span className="text-[#900C3F] font-bold">Ghost Mode</span> enabled by default. You are invisible.
-                        </p>
-                    </div>
 
                 </div>
 
@@ -293,7 +265,7 @@ const Home = () => {
                 {/* Center: Credits */}
                 <div className="flex flex-col items-center gap-1 order-1 md:order-2 text-center">
                     <p>From One MSITian to Another. Made with ❤️.</p>
-                    <p className="text-xs opacity-80">Created by <span className="text-[#900C3F] font-bold">Suman Banerjee</span></p>
+                    <p className="text-xs opacity-80 uppercase tracking-widest font-medium">Created by <span className="text-[#900C3F] font-bold">Suman Banerjee</span></p>
                 </div>
 
                 {/* Right: Links */}

@@ -8,15 +8,17 @@ class RoomStore {
         this.ROOM_EXPIRY = 30 * 60 * 1000; // 30 minutes
     }
 
-    createRoom(duration = 30, customCode = null, ownerId = null) {
+    createRoom(duration = 30, customCode = null, ownerId = null, isPermanent = false) {
         let code = customCode;
 
         if (code) {
             // If custom code provided, check if it exists
             if (this.rooms.has(code)) {
                 const existingRoom = this.rooms.get(code);
-                // Reset expiry if accessing existing room
-                this._resetExpiryTimer(code);
+                // Reset expiry if accessing existing room (only for non-permanent)
+                if (!existingRoom.isPermanent) {
+                    this._resetExpiryTimer(code);
+                }
                 return existingRoom;
             }
         } else {
@@ -31,6 +33,7 @@ class RoomStore {
             ownerId, // Store who created it
             createdAt: Date.now(),
             expiresAt: Date.now() + expiryTime,
+            isPermanent, // Flag for rooms that never die
             users: new Map(), // socketId -> User
             files: [],
             messages: [],
@@ -38,7 +41,11 @@ class RoomStore {
         };
 
         this.rooms.set(code, room);
-        this._startExpiryTimer(code, expiryTime);
+
+        // Only start expiry timer for non-permanent rooms
+        if (!isPermanent) {
+            this._startExpiryTimer(code, expiryTime);
+        }
 
         return room;
     }
@@ -91,7 +98,7 @@ class RoomStore {
         const msg = {
             ...message,
             timestamp: Date.now(),
-            expiresAt: room.expiresAt
+            expiresAt: Date.now() + (30 * 60 * 1000) // Each message lives for 30 minutes
         };
         room.messages.push(msg);
         this._resetExpiryTimer(code);
@@ -106,7 +113,7 @@ class RoomStore {
         const file = {
             ...fileData,
             timestamp: Date.now(),
-            expiresAt: room.expiresAt
+            expiresAt: Date.now() + (30 * 60 * 1000) // Each file lives for 30 minutes
         };
         room.files.push(file);
         this._resetExpiryTimer(code);
@@ -143,7 +150,45 @@ class RoomStore {
     }
 
     _resetExpiryTimer(code) {
-        this._startExpiryTimer(code);
+        const room = this.rooms.get(code);
+        if (room && !room.isPermanent) {
+            this._startExpiryTimer(code);
+        }
+    }
+
+    pruneExpiredContent(code) {
+        const room = this.rooms.get(code);
+        if (!room) return;
+
+        const now = Date.now();
+
+        // Filter out expired messages
+        const originalMessageCount = room.messages.length;
+        room.messages = room.messages.filter(msg => {
+            // Use the msg.expiresAt if it exists, fallback to a default if not
+            return msg.expiresAt > now;
+        });
+
+        // Filter out expired files and delete from disk
+        const originalFileCount = room.files.length;
+        const expiredFiles = room.files.filter(file => file.expiresAt <= now);
+
+        expiredFiles.forEach(file => {
+            const filePath = path.join(__dirname, '../uploads', file.id);
+            fs.unlink(filePath, (err) => {
+                if (err) {
+                    if (err.code !== 'ENOENT') console.error(`Failed to delete expired file ${filePath}:`, err);
+                }
+            });
+        });
+
+        room.files = room.files.filter(file => file.expiresAt > now);
+
+        if (originalMessageCount !== room.messages.length || originalFileCount !== room.files.length) {
+            console.log(`Pruned ${originalMessageCount - room.messages.length} messages and ${originalFileCount - room.files.length} files from room ${code}`);
+            return true; // Content was pruned
+        }
+        return false;
     }
 
     deleteRoom(code) {
