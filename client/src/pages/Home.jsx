@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useRoom } from '../context/RoomContext';
 import LoadingScreen from '../components/LoadingScreen';
-import { ArrowRight, Clock, Users, Zap, Star, Quote, Shield, FileText, Share2, Trash2, Github, Linkedin, ExternalLink, Calculator, Plus, BookOpen } from 'lucide-react';
+import { ArrowRight, Clock, Users, Zap, Star, Quote, Shield, FileText, Share2, Trash2, Github, Linkedin, ExternalLink, Calculator, Plus, BookOpen, ScanLine, X } from 'lucide-react';
+import { Html5Qrcode } from "html5-qrcode";
+import toast from 'react-hot-toast';
 
 const testimonials = [
     { name: "Sourin Roy", text: "The fastest way to share files effortlessly. Seamless experience!", role: "Student" },
@@ -16,6 +18,7 @@ const Home = () => {
     const [joinCode, setJoinCode] = useState('');
     const [duration, setDuration] = useState(30);
     const [isLoading, setIsLoading] = useState(true);
+    const [showScanner, setShowScanner] = useState(false);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -23,6 +26,45 @@ const Home = () => {
         }, 2000);
         return () => clearTimeout(timer);
     }, []);
+
+    // QR Scanner Logic
+    useEffect(() => {
+        let html5QrCode;
+        if (showScanner) {
+            html5QrCode = new Html5Qrcode("reader");
+            const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+                // Check if it's a URL or a room code
+                try {
+                    const url = new URL(decodedText);
+                    if (url.pathname.startsWith('/room/')) {
+                        const code = url.pathname.split('/room/')[1];
+                        joinRoom(code);
+                        setShowScanner(false);
+                    }
+                } catch (e) {
+                    // Not a URL, try as a code
+                    if (decodedText.length === 6 || decodedText === 'AIML3') {
+                        joinRoom(decodedText.toUpperCase());
+                        setShowScanner(false);
+                    }
+                }
+            };
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+            html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback)
+                .catch(err => {
+                    console.error("Scanner error:", err);
+                    toast.error("Failed to start camera");
+                    setShowScanner(false);
+                });
+        }
+
+        return () => {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().catch(err => console.error("Scanner stop error:", err));
+            }
+        };
+    }, [showScanner]);
 
     if (isLoading) {
         return <LoadingScreen />;
@@ -158,7 +200,7 @@ const Home = () => {
                             <button
                                 type="submit"
                                 disabled={joinCode.length !== 6}
-                                className="w-full py-4 bg-white text-[#900C3F] border-2 border-[#900C3F]/10 rounded-xl font-bold text-lg hover:bg-[#900C3F] hover:text-white hover:border-[#900C3F] hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-[0.98]"
+                                className="w-full py-4 bg-[#900C3F] text-white rounded-xl font-bold text-lg hover:bg-[#700931] hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-[0.98] mb-3"
                             >
                                 Join Now
                             </button>
@@ -214,6 +256,31 @@ const Home = () => {
 
 
                 </div>
+
+                {/* QR Scanner Modal */}
+                {showScanner && (
+                    <div className="fixed inset-0 bg-black/90 z-[100] flex flex-col items-center justify-center p-4 backdrop-blur-md">
+                        <div className="w-full max-w-sm bg-white rounded-[2.5rem] overflow-hidden shadow-2xl relative animate-in zoom-in-95 duration-300">
+                            <div className="p-6 bg-[#900C3F] text-white flex justify-between items-center">
+                                <div className="flex items-center gap-3">
+                                    <div className="bg-white/20 p-2 rounded-xl">
+                                        <ScanLine className="w-5 h-5" />
+                                    </div>
+                                    <h3 className="font-black tracking-tight">Scan Room QR</h3>
+                                </div>
+                                <button onClick={() => setShowScanner(false)} className="p-2 hover:bg-white/20 rounded-full transition-colors">
+                                    <X className="w-6 h-6" />
+                                </button>
+                            </div>
+                            <div id="reader" className="w-full h-80 bg-black"></div>
+                            <div className="p-8 text-center bg-white">
+                                <p className="text-gray-500 font-bold text-sm leading-relaxed">
+                                    Point your camera at a room QR code <br />to join the session instantly.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Testimonials Section */}
                 <div className="w-full overflow-hidden py-10 relative">
@@ -303,6 +370,25 @@ const Home = () => {
                 .animate-float-slow { animation: float-slow 8s ease-in-out infinite; }
                 .animate-float-medium { animation: float-medium 6s ease-in-out infinite; }
                 .animate-float-fast { animation: float-fast 4s ease-in-out infinite; }
+            `}</style>
+
+            {/* Mobile-Only Floating QR Scanner Logo */}
+            <button
+                onClick={() => setShowScanner(true)}
+                className="md:hidden fixed bottom-8 right-8 w-16 h-16 bg-[#900C3F] text-white rounded-full shadow-2xl shadow-[#900C3F]/40 flex items-center justify-center z-50 hover:scale-110 active:scale-95 transition-all border-4 border-white animate-bounce-slow"
+                title="Scan QR Code"
+            >
+                <ScanLine className="w-8 h-8" />
+            </button>
+
+            <style>{`
+                @keyframes bounce-slow {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-10px); }
+                }
+                .animate-bounce-slow {
+                    animation: bounce-slow 3s ease-in-out infinite;
+                }
             `}</style>
         </div>
     );

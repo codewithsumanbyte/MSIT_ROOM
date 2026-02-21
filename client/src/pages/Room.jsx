@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRoom } from '../context/RoomContext';
-import { Send, Paperclip, ArrowLeft, Download, FileText, Clock, MoreVertical, Copy, LogOut, File, Smile, QrCode, X, Check, Share2, Trash2, ScanLine } from 'lucide-react';
+import { Send, Paperclip, ArrowLeft, Download, FileText, Clock, MoreVertical, Copy, LogOut, File, Smile, QrCode, X, Check, Share2, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import EmojiPicker from 'emoji-picker-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import LoadingScreen from '../components/LoadingScreen';
-import { Html5QrcodeScanner, Html5Qrcode } from "html5-qrcode";
 
 
 const Room = () => {
@@ -18,13 +17,11 @@ const Room = () => {
         userId,
         messages,
         files,
-        users, // Live users list
-        uploadProgress, // 0-100
+        users,
+        uploadProgress,
         isUploading,
-        isOwner,
         sendMessage,
         uploadFile,
-        clearRoom,
         socket,
         joinRoom
     } = useRoom();
@@ -40,8 +37,6 @@ const Room = () => {
     const [currentTime, setCurrentTime] = useState(Date.now());
     const [isDragging, setIsDragging] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [showScanner, setShowScanner] = useState(false);
-    const scannerRef = useRef(null);
     const [vh, setVh] = useState(window.innerHeight * 0.01);
 
     useEffect(() => {
@@ -265,44 +260,6 @@ const Room = () => {
         return { isCode: points >= 2, language: detectedLang };
     };
 
-    // QR Scanner Logic
-    useEffect(() => {
-        let html5QrCode;
-        if (showScanner) {
-            html5QrCode = new Html5Qrcode("reader");
-            const qrCodeSuccessCallback = (decodedText, decodedResult) => {
-                // Check if it's a URL or a room code
-                try {
-                    const url = new URL(decodedText);
-                    if (url.pathname.startsWith('/room/')) {
-                        const code = url.pathname.split('/room/')[1];
-                        joinRoom(code);
-                        setShowScanner(false);
-                    }
-                } catch (e) {
-                    // Not a URL, try as a code
-                    if (decodedText.length === 6 || decodedText === 'AIML3') {
-                        joinRoom(decodedText.toUpperCase());
-                        setShowScanner(false);
-                    }
-                }
-            };
-            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-
-            html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback)
-                .catch(err => {
-                    console.error("Scanner error:", err);
-                    toast.error("Failed to start camera");
-                    setShowScanner(false);
-                });
-        }
-
-        return () => {
-            if (html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().catch(err => console.error("Scanner stop error:", err));
-            }
-        };
-    }, [showScanner]);
 
     const timeline = [...messages].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
@@ -367,13 +324,6 @@ const Room = () => {
                         title="Show QR Code"
                     >
                         <QrCode className="w-5 h-5" />
-                    </button>
-                    <button
-                        onClick={() => setShowScanner(true)}
-                        className="p-2 hover:bg-black/10 rounded-full transition-colors md:hidden"
-                        title="Scan QR Code"
-                    >
-                        <ScanLine className="w-5 h-5 text-yellow-300 animate-pulse" />
                     </button>
                     <button
                         onClick={() => setShowSidebar(!showSidebar)}
@@ -653,23 +603,6 @@ const Room = () => {
 
 
 
-            {/* QR Scanner Modal */}
-            {showScanner && (
-                <div className="fixed inset-0 bg-black/90 z-[100] flex flex-col items-center justify-center p-4 backdrop-blur-md">
-                    <div className="w-full max-w-sm bg-white rounded-3xl overflow-hidden shadow-2xl relative">
-                        <div className="p-4 bg-[#900C3F] text-white flex justify-between items-center">
-                            <h3 className="font-bold">Scan Room QR</h3>
-                            <button onClick={() => setShowScanner(false)} className="p-1 hover:bg-white/20 rounded-full transition-colors">
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
-                        <div id="reader" className="w-full h-80 bg-black"></div>
-                        <div className="p-6 text-center">
-                            <p className="text-gray-500 text-sm">Scan another user's room QR code to join instantly</p>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* QR Code Modal - Maroon Theme */}
             {showQR && (
