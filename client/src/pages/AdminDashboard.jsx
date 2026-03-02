@@ -14,12 +14,13 @@ import {
     Filter
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { SERVER_URL } from '../utils/config';
+import { supabase } from '../utils/supabase';
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
     const [resources, setResources] = useState([]);
     const [loading, setLoading] = useState(false);
-    const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'https://msit-room-api.onrender.com';
 
     // Form State
     const [title, setTitle] = useState('');
@@ -412,6 +413,7 @@ const AdminDashboard = () => {
                             ))}
                         </div>
                     </div>
+
                 </div>
             </main>
         </div>

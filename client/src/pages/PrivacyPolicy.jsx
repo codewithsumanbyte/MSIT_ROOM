@@ -9,7 +9,7 @@ const PrivacyPolicy = () => {
         <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-[#900C3F] selection:text-white pb-20">
 
             {/* Header */}
-            <header className="px-6 py-6 md:px-12 flex items-center max-w-4xl mx-auto w-full z-10 relative">
+            <header className="px-6 py-6 md:px-12 flex items-center w-full z-10 relative border-b border-gray-100">
                 <button onClick={() => navigate('/')} className="hover:bg-gray-100 p-2 rounded-full transition-colors group">
                     <ArrowLeft className="w-6 h-6 text-gray-600 group-hover:text-[#900C3F]" />
                 </button>

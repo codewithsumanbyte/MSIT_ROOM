@@ -2,7 +2,30 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useRoom } from '../context/RoomContext';
 import LoadingScreen from '../components/LoadingScreen';
-import { ArrowRight, Clock, Users, Zap, Star, Quote, Shield, FileText, Share2, Trash2, Github, Linkedin, ExternalLink, Calculator, Plus, BookOpen, ScanLine, X } from 'lucide-react';
+import {
+    ArrowRight,
+    Clock,
+    Users,
+    Zap,
+    Star,
+    Quote,
+    Shield,
+    FileText,
+    Share2,
+    Trash2,
+    Github,
+    Linkedin,
+    ExternalLink,
+    Calculator,
+    Plus,
+    BookOpen,
+    ScanLine,
+    X,
+    Menu,
+    Bot,
+    Play,
+    Video
+} from 'lucide-react';
 import { Html5Qrcode } from "html5-qrcode";
 import toast from 'react-hot-toast';
 
@@ -19,6 +42,7 @@ const Home = () => {
     const [duration, setDuration] = useState(30);
     const [isLoading, setIsLoading] = useState(true);
     const [showScanner, setShowScanner] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -105,15 +129,99 @@ const Home = () => {
 
             {/* Header */}
             <header className="px-6 py-6 md:px-12 flex justify-between items-center max-w-7xl mx-auto w-full z-10 relative">
-                <div className="flex items-center gap-3 group cursor-pointer">
+                <div className="flex items-center gap-3 group cursor-pointer" onClick={() => navigate('/')}>
                     <img src="/logo.svg" alt="MSIT Room Logo" className="w-12 h-12 transition-transform duration-500 group-hover:rotate-12 drop-shadow-xl" />
                     <span className="text-2xl font-black tracking-tight text-[#581845] hidden md:block group-hover:text-[#900C3F] transition-colors">MSIT ROOM</span>
                 </div>
-                <div className="flex items-center gap-6">
-                    <Link to="/resource-hub" className="text-gray-600 hover:text-[#900C3F] transition-colors font-bold text-sm">Academic Hub</Link>
-                    <Link to="/more-features" className="text-gray-600 hover:text-[#900C3F] transition-colors font-bold text-sm">GPA Calculator</Link>
+
+                {/* Navigation Container */}
+                <div className="flex items-center gap-3 md:gap-6">
+
+                    {/* Desktop Navigation Links */}
+                    <div className="hidden md:flex items-center gap-6">
+                        <Link to="/resource-hub" className="text-gray-600 hover:text-[#900C3F] transition-colors font-bold text-sm">Academic Hub</Link>
+                        <Link to="/more-features" className="text-gray-600 hover:text-[#900C3F] transition-colors font-bold text-sm">GPA Calculator</Link>
+                    </div>
+
+                    {/* Ask AI Button (Visible on Desktop & Mobile) */}
+                    <Link to="/msit-gpt" className="flex items-center gap-1.5 md:gap-2 bg-gradient-to-r from-[#581845] to-[#900C3F] text-white px-3 py-1.5 md:px-4 md:py-2 rounded-full font-bold text-xs md:text-sm transition-all hover:shadow-lg hover:shadow-[#900C3F]/30 hover:-translate-y-0.5 border border-[#900C3F]/50">
+                        <Bot className="w-4 h-4 md:animate-pulse" /> <span className="hidden sm:inline">MSIT GPT</span><span className="sm:hidden">GPT</span>
+                    </Link>
+
+                    {/* Mobile Menu Button */}
+                    <button
+                        className="md:hidden p-2 text-gray-600 hover:text-[#900C3F] hover:bg-gray-100 rounded-xl transition-colors"
+                        onClick={() => setIsMobileMenuOpen(true)}
+                    >
+                        <Menu className="w-6 h-6" />
+                    </button>
                 </div>
             </header>
+
+            {/* Mobile Navigation Drawer */}
+            {isMobileMenuOpen && (
+                <div className="fixed inset-0 z-[100] flex md:hidden">
+                    {/* Backdrop */}
+                    <div
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                    ></div>
+
+                    {/* Drawer */}
+                    <div className="relative w-4/5 max-w-sm bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
+                        <div className="p-6 flex justify-between items-center border-b border-gray-100">
+                            <div className="flex items-center gap-3">
+                                <img src="/logo.svg" alt="MSIT Room Logo" className="w-10 h-10" />
+                                <span className="text-xl font-black tracking-tight text-[#581845]">MSIT ROOM</span>
+                            </div>
+                            <button
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="p-2 text-gray-500 hover:bg-gray-100 hover:text-[#900C3F] rounded-full transition-colors"
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        <div className="flex flex-col p-6 gap-6">
+                            <Link
+                                to="/resource-hub"
+                                className="flex items-center gap-4 text-lg font-bold text-gray-700 hover:text-[#900C3F] transition-colors"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                <div className="p-2 bg-[#900C3F]/5 rounded-xl text-[#900C3F]">
+                                    <BookOpen className="w-6 h-6" />
+                                </div>
+                                Academic Hub
+                            </Link>
+                            <Link
+                                to="/more-features"
+                                className="flex items-center gap-4 text-lg font-bold text-gray-700 hover:text-[#900C3F] transition-colors"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                <div className="p-2 bg-[#581845]/5 rounded-xl text-[#581845]">
+                                    <Calculator className="w-6 h-6" />
+                                </div>
+                                GPA Calculator
+                            </Link>
+                            <Link
+                                to="/team"
+                                className="flex items-center gap-4 text-lg font-bold text-gray-700 hover:text-[#900C3F] transition-colors"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                <div className="p-2 bg-blue-500/5 rounded-xl text-blue-600">
+                                    <Users className="w-6 h-6" />
+                                </div>
+                                Our Team
+                            </Link>
+                        </div>
+
+                        <div className="mt-auto p-6 border-t border-gray-100 bg-gray-50 text-center">
+                            <p className="text-sm font-bold text-[#581845]">For Students, By Students.</p>
+                            <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest">MSIT Room</p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <main className="flex-1 flex flex-col items-center pt-12 pb-12 px-6 text-center max-w-6xl mx-auto w-full z-10">
 
@@ -254,7 +362,6 @@ const Home = () => {
                         </div>
                     </div>
 
-
                 </div>
 
                 {/* QR Scanner Modal */}
@@ -331,65 +438,69 @@ const Home = () => {
 
                 {/* Center: Credits */}
                 <div className="flex flex-col items-center gap-1 order-1 md:order-2 text-center">
-                    <p>From One MSITian to Another. Made with ❤️.</p>
-                    <p className="text-xs opacity-80 uppercase tracking-widest font-medium">Created by <span className="text-[#900C3F] font-bold">Suman Banerjee</span></p>
+                    <p>For Students, By Students. Made with ❤️.</p>
+                    <p className="text-xs opacity-80 uppercase tracking-widest font-medium">
+                        Created by <span className="text-[#900C3F] font-bold">Suman Banerjee & <Link to="/team" className="hover:underline hover:text-[#C70039] transition-colors cursor-pointer">Team</Link></span>
+                    </p>
                 </div>
 
                 {/* Right: Links */}
                 <div className="order-3 flex items-center gap-4">
-                    <Link to="/privacy" className="text-gray-400 hover:text-[#900C3F] transition-colors text-xs underline decoration-dotted underline-offset-4">Privacy Policy</Link>
+                    <Link to="/team" className="text-gray-400 hover:text-[#900C3F] transition-colors text-xs underline decoration-dotted underline-offset-4">Our Team</Link>
+                    <Link to="/privacy-policy" className="text-gray-400 hover:text-[#900C3F] transition-colors text-xs underline decoration-dotted underline-offset-4">Privacy Policy</Link>
                 </div>
             </footer>
 
             <style>{`
-                @keyframes marquee {
-                    0% { transform: translateX(0); }
-                    100% { transform: translateX(-50%); }
+@keyframes marquee {
+    0 % { transform: translateX(0); }
+    100 % { transform: translateX(-50 %); }
+}
+                .animate - marquee {
+    display: flex;
+    animation: marquee 40s linear infinite;
+    width: max - content;
+}
+                .animate - marquee:hover {
+    animation - play - state: paused;
+}
+
+@keyframes float - slow {
+    0 %, 100 % { transform: translateY(0) rotate(0deg); }
+    50 % { transform: translateY(-20px) rotate(5deg); }
+}
+@keyframes float - medium {
+    0 %, 100 % { transform: translateY(0) rotate(0deg); }
+    50 % { transform: translateY(-15px) rotate(- 5deg);
+}
                 }
-                .animate-marquee {
-                    display: flex;
-                    animation: marquee 40s linear infinite;
-                    width: max-content;
-                }
-                .animate-marquee:hover {
-                    animation-play-state: paused;
-                }
-                
-                @keyframes float-slow {
-                    0%, 100% { transform: translateY(0) rotate(0deg); }
-                    50% { transform: translateY(-20px) rotate(5deg); }
-                }
-                @keyframes float-medium {
-                     0%, 100% { transform: translateY(0) rotate(0deg); }
-                    50% { transform: translateY(-15px) rotate(-5deg); }
-                }
-                @keyframes float-fast {
-                    0%, 100% { transform: translateY(0) scale(1); }
-                    50% { transform: translateY(-10px) scale(1.05); }
-                }
-                .animate-float-slow { animation: float-slow 8s ease-in-out infinite; }
-                .animate-float-medium { animation: float-medium 6s ease-in-out infinite; }
-                .animate-float-fast { animation: float-fast 4s ease-in-out infinite; }
-            `}</style>
+@keyframes float - fast {
+    0 %, 100 % { transform: translateY(0) scale(1); }
+    50 % { transform: translateY(-10px) scale(1.05); }
+}
+                .animate - float - slow { animation: float - slow 8s ease -in -out infinite; }
+                .animate - float - medium { animation: float - medium 6s ease -in -out infinite; }
+                .animate - float - fast { animation: float - fast 4s ease -in -out infinite; }
+`}</style>
 
             {/* Mobile-Only Floating QR Scanner Logo */}
             <button
                 onClick={() => setShowScanner(true)}
-                className="md:hidden fixed bottom-8 right-8 w-16 h-16 bg-[#900C3F] text-white rounded-full shadow-2xl shadow-[#900C3F]/40 flex items-center justify-center z-50 hover:scale-110 active:scale-95 transition-all border-4 border-white animate-bounce-slow"
+                className="md:hidden fixed bottom-8 right-8 w-14 h-14 bg-[#900C3F] text-white rounded-full shadow-2xl shadow-[#900C3F]/40 flex items-center justify-center z-50 hover:scale-110 active:scale-95 transition-all border-4 border-white animate-bounce-slow"
                 title="Scan QR Code"
             >
-                <ScanLine className="w-8 h-8" />
+                <ScanLine className="w-7 h-7" />
             </button>
 
             <style>{`
-                @keyframes bounce-slow {
-                    0%, 100% { transform: translateY(0); }
-                    50% { transform: translateY(-10px); }
-                }
-                .animate-bounce-slow {
-                    animation: bounce-slow 3s ease-in-out infinite;
-                }
-            `}</style>
+@keyframes bounce - slow {
+    0 %, 100 % { transform: translateY(0); }
+    50 % { transform: translateY(-10px); }
+}
+                .animate - bounce - slow {
+    animation: bounce - slow 3s ease -in -out infinite;
+}
+`}</style>
         </div>
     );
 };

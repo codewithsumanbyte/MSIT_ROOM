@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const { Server } = require("socket.io");
@@ -25,6 +26,10 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Admin & Resource Routes
 app.use('/api/admin', adminRoutes);
+
+// MSIT GPT Routes
+const gptRoutes = require('./routes/gptRoutes');
+app.use('/api/gpt', gptRoutes);
 
 // Root route / Health check
 app.get('/', (req, res) => {
@@ -103,7 +108,9 @@ io.on('connection', (socket) => {
                 messages: room.messages,
                 files: room.files,
                 users: roomStore.getUsers(roomCode),
-                isOwner: room.ownerId === userId // Check ownership
+                isOwner: room.ownerId === userId, // Check ownership
+                expiresAt: room.expiresAt,
+                isPermanent: room.isPermanent
             });
 
             // Notify others

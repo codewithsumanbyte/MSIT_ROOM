@@ -97,27 +97,27 @@ const MoreFeatures = () => {
             }
             setResult((totalCreditPoints / totalCredits).toFixed(2));
         } else {
-            // CGPA Calculation
-            let totalCreditIndex = 0;
-            let totalCredits = 0;
+            // CGPA Calculation: Add all SGPAs and divide by number of semesters
+            let totalSgpa = 0;
+            let totalSemesters = 0;
             let hasError = false;
 
             semesters.forEach(s => {
                 const sgpa = parseFloat(s.sgpa);
-                const credits = parseFloat(s.credits);
-                if (isNaN(sgpa) || sgpa < 0 || sgpa > 10 || isNaN(credits) || credits <= 0) {
+                if (isNaN(sgpa) || sgpa < 0 || sgpa > 10) {
                     hasError = true;
                     return;
                 }
-                totalCreditIndex += sgpa * credits;
-                totalCredits += credits;
+                totalSgpa += sgpa;
+                totalSemesters += 1;
             });
 
             if (hasError) {
-                toast.error("Please enter valid SGPA (0-10) and Credits");
+                toast.error("Please enter valid SGPA (0-10) for all semesters");
                 return;
             }
-            setResult((totalCreditIndex / totalCredits).toFixed(2));
+            if (totalSemesters === 0) return;
+            setResult((totalSgpa / totalSemesters).toFixed(2));
         }
     };
 
@@ -312,7 +312,7 @@ const MoreFeatures = () => {
                                                 <div key={sem.id} className="flex flex-col md:flex-row gap-3 items-end md:items-center bg-gray-50 p-4 rounded-2xl border border-gray-100">
                                                     <div className="flex-1 w-full">
                                                         <div className="text-xs font-black text-[#581845] mb-2 px-1">SEMESTER {idx + 1}</div>
-                                                        <div className="grid grid-cols-2 gap-3">
+                                                        <div className="grid grid-cols-1 gap-3">
                                                             <div>
                                                                 <label className="text-[10px] uppercase font-bold text-gray-400 mb-1 block px-1">SGPA</label>
                                                                 <input
@@ -321,16 +321,6 @@ const MoreFeatures = () => {
                                                                     placeholder="0.00"
                                                                     value={sem.sgpa}
                                                                     onChange={(e) => updateSemester(sem.id, 'sgpa', e.target.value)}
-                                                                    className="w-full bg-white border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-[#900C3F]/20 shadow-sm"
-                                                                />
-                                                            </div>
-                                                            <div>
-                                                                <label className="text-[10px] uppercase font-bold text-gray-400 mb-1 block px-1">Total Credits</label>
-                                                                <input
-                                                                    type="number"
-                                                                    placeholder="0"
-                                                                    value={sem.credits}
-                                                                    onChange={(e) => updateSemester(sem.id, 'credits', e.target.value)}
                                                                     className="w-full bg-white border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-[#900C3F]/20 shadow-sm"
                                                                 />
                                                             </div>

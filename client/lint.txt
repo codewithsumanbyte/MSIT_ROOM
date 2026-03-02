@@ -1,0 +1,89 @@
+﻿
+> client@0.0.0 lint
+> eslint .
+
+
+E:\MSIT_ROOM\client\src\context\RoomContext.jsx
+   1:65  error  'useRef' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               no-unused-vars
+   9:14  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              react-refresh/only-export-components
+  33:9   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  31 |             localStorage.setItem('userId', storedUserId);
+  32 |         }
+> 33 |         setUserId(storedUserId);
+     |         ^^^^^^^^^ Avoid calling setState() directly within an effect
+  34 |     }, []);
+  35 |
+  36 |     // Initialize socket          react-hooks/set-state-in-effect
+  39:9   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  37 |     useEffect(() => {
+  38 |         const newSocket = io(SERVER_URL);
+> 39 |         setSocket(newSocket);
+     |         ^^^^^^^^^ Avoid calling setState() directly within an effect
+  40 |
+  41 |         return () => newSocket.close();
+  42 |     }, []);  react-hooks/set-state-in-effect
+
+E:\MSIT_ROOM\client\src\pages\AdminDashboard.jsx
+   37:8   warning  React Hook useEffect has a missing dependency: 'navigate'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   55:18  error    'error' is defined but never used                                                                            no-unused-vars
+  122:18  error    'error' is defined but never used                                                                            no-unused-vars
+
+E:\MSIT_ROOM\client\src\pages\Home.jsx
+  36:57  error    'decodedResult' is defined but never used                                                                    no-unused-vars
+  45:26  error    'e' is defined but never used                                                                                no-unused-vars
+  68:8   warning  React Hook useEffect has a missing dependency: 'joinRoom'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\MSIT_ROOM\client\src\pages\MSITGPT.jsx
+   31:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  29 |     useEffect(() => {
+  30 |         if (!isAnimated) {
+> 31 |             setDisplayedContent(content);
+     |             ^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  32 |             setIsDone(true);
+  33 |             return;
+  34 |         }  react-hooks/set-state-in-effect
+   89:22  error  'e' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 no-unused-vars
+  223:56  error  'node' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              no-unused-vars
+
+E:\MSIT_ROOM\client\src\pages\ResourceHub.jsx
+  38:18  error  'error' is defined but never used  no-unused-vars
+
+E:\MSIT_ROOM\client\src\pages\Room.jsx
+   40:52  error    Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  38 |     const emojiPickerRef = useRef(null);
+  39 |     const textareaRef = useRef(null);
+> 40 |     const [currentTime, setCurrentTime] = useState(Date.now());
+     |                                                    ^^^^^^^^^^ Cannot call impure function
+  41 |     const [isDragging, setIsDragging] = useState(false);
+  42 |     const [isLoading, setIsLoading] = useState(true);
+  43 |     const [vh, setVh] = useState(window.innerHeight * 0.01);  react-hooks/purity
+   43:12  error    'vh' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    no-unused-vars
+  113:8   warning  React Hook useEffect has a missing dependency: 'joinRoom'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           react-hooks/exhaustive-deps
+  314:48  error    'i' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         no-unused-vars
+
+Γ£û 18 problems (15 errors, 3 warnings)
+

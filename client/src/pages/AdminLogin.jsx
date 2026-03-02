@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Lock, ShieldCheck, AlertCircle, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { SERVER_URL } from '../utils/config';
 
 const AdminLogin = () => {
     const [password, setPassword] = useState('');
@@ -10,7 +11,6 @@ const AdminLogin = () => {
 
     const handleLogin = async (e) => {
         e.preventDefault();
-        const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'https://msit-room-api.onrender.com';
         setLoading(true);
 
         try {

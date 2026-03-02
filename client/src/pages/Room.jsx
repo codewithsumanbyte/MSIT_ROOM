@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRoom } from '../context/RoomContext';
-import { Send, Paperclip, ArrowLeft, Download, FileText, Clock, MoreVertical, Copy, LogOut, File, Smile, QrCode, X, Check, Share2, Trash2 } from 'lucide-react';
+import { Send, Paperclip, ArrowLeft, Download, FileText, Clock, MoreVertical, Copy, LogOut, File, Smile, QrCode, X, Check, Share2, Trash2, Bot } from 'lucide-react';
 import toast from 'react-hot-toast';
 import EmojiPicker from 'emoji-picker-react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import LoadingScreen from '../components/LoadingScreen';
+import { SERVER_URL } from '../utils/config';
+
 
 
 const Room = () => {
@@ -23,7 +24,9 @@ const Room = () => {
         sendMessage,
         uploadFile,
         socket,
-        joinRoom
+        joinRoom,
+        roomExpiresAt,
+        isPermanent
     } = useRoom();
 
     const [newMessage, setNewMessage] = useState('');
@@ -51,6 +54,14 @@ const Room = () => {
         const interval = setInterval(() => setCurrentTime(Date.now()), 1000);
         return () => clearInterval(interval);
     }, []);
+
+    // Auto-Kick Logic for Expired Rooms
+    useEffect(() => {
+        if (!isPermanent && roomExpiresAt && currentTime > roomExpiresAt) {
+            toast.error("Room code is expire create new ", { duration: 5000 });
+            navigate('/');
+        }
+    }, [currentTime, roomExpiresAt, isPermanent, navigate]);
 
     // Visual Viewport Height Fix for Mobile (Realme/Samsung/iOS)
     useEffect(() => {
@@ -124,8 +135,9 @@ const Room = () => {
 
     const handleSend = (e) => {
         e?.preventDefault();
-        if (newMessage.trim()) {
-            sendMessage(newMessage);
+        const msg = newMessage.trim();
+        if (msg) {
+            sendMessage(msg);
             setNewMessage('');
             if (textareaRef.current) textareaRef.current.style.height = 'auto';
         }
@@ -263,8 +275,6 @@ const Room = () => {
 
     const timeline = [...messages].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
-    const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'https://msit-room-api.onrender.com';
-
     if (isLoading) {
         return <LoadingScreen />;
     }
@@ -313,11 +323,28 @@ const Room = () => {
                                 ))}
                             </div>
                             <span>{users.length} Online</span>
+
+                            {!isPermanent && roomExpiresAt && (
+                                <>
+                                    <span className="opacity-50">•</span>
+                                    <span className="flex items-center gap-1 text-[#ff80a6] font-medium bg-black/20 px-2 py-0.5 rounded-full">
+                                        <Clock className="w-3 h-3" />
+                                        {getExpiryString(roomExpiresAt) || '0m 0s'}
+                                    </span>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => navigate('/msit-gpt')}
+                        className="flex items-center gap-1.5 md:gap-2 mr-1 md:mr-3 bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-full font-bold text-xs md:text-sm transition-all"
+                        title="Ask MSIT GPT"
+                    >
+                        <Bot className="w-4 h-4" /> <span className="hidden sm:inline">MSIT GPT</span><span className="sm:hidden">GPT</span>
+                    </button>
                     <button
                         onClick={() => setShowQR(true)}
                         className="p-2 hover:bg-black/10 rounded-full transition-colors"
@@ -354,7 +381,7 @@ const Room = () => {
             <div className="flex-1 flex overflow-hidden relative">
 
                 {/* Chat Area */}
-                <main className="flex-1 flex flex-col relative w-full">
+                <main className="flex-1 flex flex-col relative w-full min-w-0">
                     {/* Clean Background - No Pattern */}
                     <div className="absolute inset-0 bg-gray-50 z-0"></div>
 
@@ -373,10 +400,10 @@ const Room = () => {
 
                             return (
                                 <div key={index} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group w-full`}>
-                                    <div className={`max-w-[85%] md:max-w-[70%] flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                                    <div className={`max-w-[85%] md:max-w-[70%] flex flex-col ${isMe ? 'items-end' : 'items-start'} min-w-0`}>
 
                                         <div className={`
-                                            relative px-3 py-2 md:px-4 md:py-3 shadow-sm text-sm group min-w-[100px] transition-all
+                                            relative px-3 py-2 md:px-4 md:py-3 shadow-sm text-sm group min-w-[100px] max-w-full transition-all
                                             ${isMe
                                                 ? 'bg-[#900C3F] text-white rounded-2xl rounded-br-none'
                                                 : 'bg-white text-gray-800 rounded-2xl rounded-bl-none border border-gray-100'
@@ -384,7 +411,7 @@ const Room = () => {
                                         `}>
 
                                             {isCodeBlock ? (
-                                                <div className="rounded-md overflow-hidden my-1 border border-white/20 text-xs md:text-sm relative group/code">
+                                                <div className="rounded-md overflow-x-auto my-1 border border-white/20 text-xs md:text-sm relative group/code max-w-full text-left">
                                                     <div className="absolute top-2 right-2 opacity-0 group-hover/code:opacity-100 transition-opacity z-10 flex gap-2">
 
                                                         <button

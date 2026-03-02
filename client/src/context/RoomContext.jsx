@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useRef } from 'r
 import { io } from 'socket.io-client';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { SERVER_URL } from '../utils/config';
 
 const RoomContext = createContext();
 
@@ -18,6 +19,8 @@ export const RoomProvider = ({ children }) => {
     const [users, setUsers] = useState([]);
     const [uploadProgress, setUploadProgress] = useState(0); // Simple 0-100 for now, or could map by file
     const [isUploading, setIsUploading] = useState(false);
+    const [roomExpiresAt, setRoomExpiresAt] = useState(null);
+    const [isPermanent, setIsPermanent] = useState(false);
     const navigate = useNavigate();
 
     // Initialize user ID only once
@@ -31,8 +34,6 @@ export const RoomProvider = ({ children }) => {
     }, []);
 
     // Initialize socket
-    const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'https://msit-room-api.onrender.com';
-
     useEffect(() => {
         const newSocket = io(SERVER_URL);
         setSocket(newSocket);
@@ -100,6 +101,8 @@ export const RoomProvider = ({ children }) => {
                 setMessages(response.messages || []);
                 setFiles(response.files || []);
                 setUsers(response.users || []);
+                setRoomExpiresAt(response.expiresAt || null);
+                setIsPermanent(response.isPermanent || false);
                 navigate(`/room/${code}`);
                 toast.success('Joined room successfully!');
             } else {
@@ -159,6 +162,7 @@ export const RoomProvider = ({ children }) => {
         });
     };
 
+
     const value = {
         socket,
         roomCode,
@@ -168,6 +172,8 @@ export const RoomProvider = ({ children }) => {
         users,
         uploadProgress,
         isUploading,
+        roomExpiresAt,
+        isPermanent,
         createRoom,
         joinRoom,
         sendMessage,

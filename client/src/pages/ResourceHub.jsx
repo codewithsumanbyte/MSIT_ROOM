@@ -14,6 +14,7 @@ import {
     Filter
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { SERVER_URL } from '../utils/config';
 
 const ResourceHub = () => {
     const navigate = useNavigate();
@@ -21,7 +22,6 @@ const ResourceHub = () => {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeYear, setActiveYear] = useState('1st Year');
-    const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'https://msit-room-api.onrender.com';
 
     const years = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
     const categories = ['Organizer', 'Study Notes', 'PYQ'];
