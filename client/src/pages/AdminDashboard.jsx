@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { SERVER_URL } from '../utils/config';
-import { supabase } from '../utils/supabase';
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
