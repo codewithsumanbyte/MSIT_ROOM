@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRoom } from '../context/RoomContext';
-import { Send, Paperclip, ArrowLeft, Download, FileText, Clock, MoreVertical, Copy, LogOut, File, Smile, QrCode, X, Check, Share2, Trash2, Bot } from 'lucide-react';
+import { Send, Paperclip, ArrowLeft, Download, FileText, Clock, MoreVertical, Copy, LogOut, File, Smile, QrCode, X, Check, Share2, Trash2, Bot, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import EmojiPicker from 'emoji-picker-react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -308,30 +308,36 @@ const Room = () => {
                     </button>
                     <div className="flex flex-col cursor-pointer" onClick={() => setShowSidebar(!showSidebar)}>
                         <h1 className="font-bold text-lg leading-tight">Room {roomId}</h1>
-                        <div className="flex items-center gap-2 text-xs text-white/80">
-                            {/* Live Users Avatars */}
-                            <div className="flex -space-x-2">
-                                {users.map((u, i) => (
-                                    <div
-                                        key={u.socketId}
-                                        className="w-5 h-5 rounded-full border border-[#900C3F] flex items-center justify-center text-[8px] font-bold text-white shadow-sm"
-                                        style={{ backgroundColor: stringToColor(u.id) }}
-                                        title={u.id}
-                                    >
-                                        {u.id.substring(5, 7).toUpperCase()}
-                                    </div>
-                                ))}
+                        <div className="flex items-center gap-1.5 md:gap-2 text-xs text-white/80 mt-0.5">
+                            {/* Desktop: Avatars and detailed text */}
+                            <div className="hidden sm:flex items-center gap-2">
+                                <div className="flex -space-x-2">
+                                    {users.map((u, i) => (
+                                        <div
+                                            key={u.socketId}
+                                            className="w-5 h-5 rounded-full border border-[#900C3F] flex items-center justify-center text-[8px] font-bold text-white shadow-sm"
+                                            style={{ backgroundColor: stringToColor(u.id) }}
+                                            title={u.id}
+                                        >
+                                            {u.id.substring(5, 7).toUpperCase()}
+                                        </div>
+                                    ))}
+                                </div>
+                                <span>{users.length} Online</span>
+                                {!isPermanent && roomExpiresAt && <span className="opacity-50">•</span>}
                             </div>
-                            <span>{users.length} Online</span>
+
+                            {/* Mobile: Compact Users Icon */}
+                            <div className="flex sm:hidden items-center gap-1 bg-black/20 px-2 py-0.5 rounded-full">
+                                <Users className="w-3 h-3" />
+                                <span className="font-medium">{users.length}</span>
+                            </div>
 
                             {!isPermanent && roomExpiresAt && (
-                                <>
-                                    <span className="opacity-50">•</span>
-                                    <span className="flex items-center gap-1 text-[#ff80a6] font-medium bg-black/20 px-2 py-0.5 rounded-full">
-                                        <Clock className="w-3 h-3" />
-                                        {getExpiryString(roomExpiresAt) || '0m 0s'}
-                                    </span>
-                                </>
+                                <span className="flex items-center gap-1 text-[#ff80a6] font-medium bg-black/20 px-2 py-0.5 rounded-full">
+                                    <Clock className="w-3 h-3" />
+                                    {getExpiryString(roomExpiresAt) || '0m 0s'}
+                                </span>
                             )}
                         </div>
                     </div>

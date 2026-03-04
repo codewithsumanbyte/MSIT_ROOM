@@ -453,34 +453,33 @@ const Home = () => {
 
             <style>{`
 @keyframes marquee {
-    0 % { transform: translateX(0); }
-    100 % { transform: translateX(-50 %); }
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
 }
-                .animate - marquee {
+.animate-marquee {
     display: flex;
     animation: marquee 40s linear infinite;
-    width: max - content;
+    width: max-content;
 }
-                .animate - marquee:hover {
-    animation - play - state: paused;
+.animate-marquee:hover {
+    animation-play-state: paused;
 }
 
-@keyframes float - slow {
-    0 %, 100 % { transform: translateY(0) rotate(0deg); }
-    50 % { transform: translateY(-20px) rotate(5deg); }
+@keyframes float-slow {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(5deg); }
 }
-@keyframes float - medium {
-    0 %, 100 % { transform: translateY(0) rotate(0deg); }
-    50 % { transform: translateY(-15px) rotate(- 5deg);
+@keyframes float-medium {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-15px) rotate(-5deg); }
 }
-                }
-@keyframes float - fast {
-    0 %, 100 % { transform: translateY(0) scale(1); }
-    50 % { transform: translateY(-10px) scale(1.05); }
+@keyframes float-fast {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-10px) scale(1.05); }
 }
-                .animate - float - slow { animation: float - slow 8s ease -in -out infinite; }
-                .animate - float - medium { animation: float - medium 6s ease -in -out infinite; }
-                .animate - float - fast { animation: float - fast 4s ease -in -out infinite; }
+.animate-float-slow { animation: float-slow 8s ease-in-out infinite; }
+.animate-float-medium { animation: float-medium 6s ease-in-out infinite; }
+.animate-float-fast { animation: float-fast 4s ease-in-out infinite; }
 `}</style>
 
             {/* Mobile-Only Floating QR Scanner Logo */}
@@ -493,12 +492,12 @@ const Home = () => {
             </button>
 
             <style>{`
-@keyframes bounce - slow {
-    0 %, 100 % { transform: translateY(0); }
-    50 % { transform: translateY(-10px); }
+@keyframes bounce-slow {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
 }
-                .animate - bounce - slow {
-    animation: bounce - slow 3s ease -in -out infinite;
+.animate-bounce-slow {
+    animation: bounce-slow 3s ease-in-out infinite;
 }
 `}</style>
         </div>
