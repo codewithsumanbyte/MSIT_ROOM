@@ -12,6 +12,7 @@ import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import ResourceHub from './pages/ResourceHub';
 import MSITGPT from './pages/MSITGPT';
+import SubjectRoadmap from './pages/SubjectRoadmap';
 import PanicOverlay from './components/PanicOverlay';
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/resource-hub" element={<ResourceHub />} />
           <Route path="/msit-gpt" element={<MSITGPT />} />
+          <Route path="/roadmap/:branch/:semester/:subjectId" element={<SubjectRoadmap />} />
         </Routes>
       </RoomProvider>
     </Router>

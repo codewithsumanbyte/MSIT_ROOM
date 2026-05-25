@@ -140,7 +140,7 @@ const Home = () => {
                     {/* Desktop Navigation Links */}
                     <div className="hidden md:flex items-center gap-6">
                         <Link to="/resource-hub" className="text-gray-600 hover:text-[#900C3F] transition-colors font-bold text-sm">Academic Hub</Link>
-                        <Link to="/more-features" className="text-gray-600 hover:text-[#900C3F] transition-colors font-bold text-sm">GPA Calculator</Link>
+                        <Link to="/more-features" className="text-gray-600 hover:text-[#900C3F] transition-colors font-bold text-sm">GPA & Syllabus</Link>
                     </div>
 
                     {/* Ask AI Button (Visible on Desktop & Mobile) */}
@@ -201,7 +201,7 @@ const Home = () => {
                                 <div className="p-2 bg-[#581845]/5 rounded-xl text-[#581845]">
                                     <Calculator className="w-6 h-6" />
                                 </div>
-                                GPA Calculator
+                                GPA & Syllabus
                             </Link>
                             <Link
                                 to="/team"

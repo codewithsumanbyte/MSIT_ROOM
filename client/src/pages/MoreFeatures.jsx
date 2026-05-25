@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calculator, BookOpen, Rocket, Plus, Trash2, RefreshCw, ChevronRight, Zap, Library } from 'lucide-react';
 import toast from 'react-hot-toast';
+import SyllabusRoadmap from '../components/SyllabusRoadmap';
 
 const getGradeFromPoints = (points) => {
     const p = parseFloat(points);
@@ -18,7 +19,9 @@ const getGradeFromPoints = (points) => {
 
 const MoreFeatures = () => {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('calculator'); // 'calculator' | 'syllabus' | 'upcoming'
+    const queryParams = new URLSearchParams(window.location.search);
+    const hasImport = queryParams.has('import');
+    const [activeTab, setActiveTab] = useState(hasImport ? 'syllabus' : 'calculator'); // 'calculator' | 'syllabus' | 'upcoming'
     const [calcMode, setCalcMode] = useState('sgpa'); // 'sgpa' | 'cgpa'
 
     // SGPA State
@@ -166,7 +169,7 @@ const MoreFeatures = () => {
                             }`}
                     >
                         <BookOpen className="w-5 h-5" />
-                        MAKAUT Syllabus
+                        Syllabus Roadmap
                     </button>
                     <button
                         onClick={() => navigate('/resource-hub')}
@@ -363,22 +366,8 @@ const MoreFeatures = () => {
                             </div>
                         )}
 
-                        {activeTab === 'syllabus' && (
-                            <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden p-8 animate-in fade-in slide-in-from-bottom-4 text-center">
-                                <div className="w-20 h-20 bg-[#900C3F]/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                                    <BookOpen className="w-10 h-10 text-[#900C3F]" />
-                                </div>
-                                <h2 className="text-3xl font-black text-gray-800 mb-4">Official MAKAUT Syllabus</h2>
-                                <p className="text-gray-500 mb-8 max-w-md mx-auto">Get the most updated AICTE model curriculum and official department-wise syllabus directly from the MAKAUT portal.</p>
-                                <a
-                                    href="https://www.makautexam.net/aicte_details/aicteugdetails.html"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 px-8 py-4 bg-[#900C3F] text-white font-black rounded-2xl shadow-lg shadow-[#900C3F]/20 hover:scale-105 transition-all"
-                                >
-                                    Open Official Site <ChevronRight className="w-5 h-5" />
-                                </a>
-                            </div>
+                         {activeTab === 'syllabus' && (
+                            <SyllabusRoadmap />
                         )}
 
                     </div>
