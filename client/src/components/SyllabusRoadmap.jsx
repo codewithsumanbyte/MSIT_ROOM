@@ -20,7 +20,8 @@ import {
     Edit3,
     BookCheck,
     Copy,
-    Check
+    Check,
+    Download
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -68,6 +69,13 @@ const SyllabusRoadmap = () => {
     const [showImportPreview, setShowImportPreview] = useState(false);
     const [importedData, setImportedData] = useState(null);
     const [showSettings, setShowSettings] = useState(false);
+    const [showManualImportModal, setShowManualImportModal] = useState(false);
+    const [manualImportInput, setManualImportInput] = useState('');
+    const [showShareModal, setShowShareModal] = useState(false);
+    const [shareLink, setShareLink] = useState('');
+    const [shareCode, setShareCode] = useState('');
+    const [copiedLink, setCopiedLink] = useState(false);
+    const [copiedCode, setCopiedCode] = useState(false);
 
     // Profile settings states
     const [profileBranch, setProfileBranch] = useState(selectedBranch);
@@ -335,10 +343,11 @@ const SyllabusRoadmap = () => {
             const encoded = btoa(unescape(encodeURIComponent(rawString)));
             const shareUrl = `${window.location.origin}${window.location.pathname}?import=${encoded}`;
             
-            navigator.clipboard.writeText(shareUrl);
-            setCopied(true);
-            toast.success('Shareable Roadmap URL copied to clipboard!', { icon: '🔗' });
-            setTimeout(() => setCopied(false), 3000);
+            setShareLink(shareUrl);
+            setShareCode(encoded);
+            setShowShareModal(true);
+            setCopiedLink(false);
+            setCopiedCode(false);
         } catch (e) {
             console.error('Failed to generate sharing URL', e);
             toast.error('Could not generate sharing URL');
@@ -364,7 +373,62 @@ const SyllabusRoadmap = () => {
         
         // Clear query parameters
         window.history.replaceState({}, document.title, window.location.pathname);
+
+        // Update default academic profile settings in local storage to prevent refresh reset
+        try {
+            const profile = { branch: importedData.branch, semester: Number(importedData.semester) };
+            localStorage.setItem('msit_user_profile', JSON.stringify(profile));
+        } catch (e) {
+            console.error("Failed to save default profile during import", e);
+        }
+
         toast.success(`Successfully imported custom roadmap for ${importedData.branch} Sem ${importedData.semester}!`);
+    };
+
+    // Handle manual syllabus import (accepts full URLs or raw Base64 strings)
+    const handleProcessManualImport = (e) => {
+        e.preventDefault();
+        if (!manualImportInput.trim()) return;
+
+        let base64Payload = manualImportInput.trim();
+
+        // If the user pasted a full URL, extract the `import` query parameter
+        if (base64Payload.includes('?import=')) {
+            try {
+                const url = new URL(base64Payload);
+                const importParam = url.searchParams.get('import');
+                if (importParam) {
+                    base64Payload = importParam;
+                } else {
+                    toast.error('The pasted URL does not contain a valid syllabus import payload.');
+                    return;
+                }
+            } catch (err) {
+                toast.error('Invalid URL format.');
+                return;
+            }
+        } else if (base64Payload.includes('import=')) {
+            // Fallback for partial URL or queries like "more-features?import=..."
+            const parts = base64Payload.split('import=');
+            if (parts.length > 1) {
+                base64Payload = parts[1].split('&')[0];
+            }
+        }
+
+        try {
+            const decoded = JSON.parse(decodeURIComponent(escape(atob(base64Payload))));
+            if (decoded && decoded.branch && decoded.semester && decoded.roadmap) {
+                setImportedData(decoded);
+                setShowManualImportModal(false);
+                setManualImportInput('');
+                setShowImportPreview(true);
+            } else {
+                toast.error('Invalid import data structure.');
+            }
+        } catch (e) {
+            console.error('Failed to parse manually imported code', e);
+            toast.error('Invalid or corrupted import code.');
+        }
     };
 
     // Calculate progress stats
@@ -443,6 +507,15 @@ const SyllabusRoadmap = () => {
                     >
                         {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
                         {copied ? 'Copied!' : 'Share Roadmap'}
+                    </button>
+
+                    <button
+                        onClick={() => setShowManualImportModal(true)}
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-[#900C3F]/5 text-[#900C3F] font-black text-xs uppercase tracking-wider px-5 py-3 rounded-2xl border border-[#900C3F]/10 hover:bg-[#900C3F] hover:text-white transition-all shadow-none hover:shadow-lg hover:shadow-[#900C3F]/30"
+                        title="Import a shared syllabus roadmap using a code or link"
+                    >
+                        <Download className="w-4 h-4" />
+                        Import Syllabus
                     </button>
 
                     <button
@@ -882,6 +955,145 @@ const SyllabusRoadmap = () => {
                                 >
                                     Overwrite & Import
                                 </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* 7.5. Manual Syllabus Import Modal */}
+            <AnimatePresence>
+                {showManualImportModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowManualImportModal(false)} />
+                        
+                        <motion.div 
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="bg-white rounded-[2.5rem] p-8 w-full max-w-md relative z-10 border shadow-2xl space-y-6"
+                        >
+                            <div className="flex justify-between items-center border-b pb-4">
+                                <div className="flex items-center gap-2">
+                                    <Download className="w-5 h-5 text-[#900C3F]" />
+                                    <h3 className="text-xl font-black text-[#581845] tracking-tight">Import Syllabus Roadmap</h3>
+                                </div>
+                                <button onClick={() => setShowManualImportModal(false)} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 transition-colors">
+                                    <X className="w-6 h-6" />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleProcessManualImport} className="space-y-4">
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Share Link or Import Code</label>
+                                    <textarea
+                                        placeholder="Paste the full syllabus share link or the raw syllabus import code here..."
+                                        required
+                                        rows={5}
+                                        value={manualImportInput}
+                                        onChange={(e) => setManualImportInput(e.target.value)}
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-xs font-semibold focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#900C3F]/20 transition-all resize-none"
+                                    />
+                                </div>
+
+                                <p className="text-gray-400 text-[10px] font-medium leading-relaxed px-1">
+                                    Pasting a valid sharing link or its corresponding base64 code will parse the subjects list and open an import preview. This allows you to verify the syllabus contents before applying.
+                                </p>
+
+                                <button
+                                    type="submit"
+                                    className="w-full py-4 bg-[#900C3F] text-white rounded-2xl font-black text-base shadow-lg shadow-[#900C3F]/20 hover:bg-[#700931] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                                >
+                                    Proceed to Preview <ArrowRight className="w-5 h-5" />
+                                </button>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* 7.8 Share Syllabus Roadmap Modal */}
+            <AnimatePresence>
+                {showShareModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowShareModal(false)} />
+                        
+                        <motion.div 
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="bg-white rounded-[2.5rem] p-8 w-full max-w-lg relative z-10 border shadow-2xl space-y-6"
+                        >
+                            <div className="flex justify-between items-center border-b pb-4">
+                                <div className="flex items-center gap-2">
+                                    <Share2 className="w-5 h-5 text-[#900C3F]" />
+                                    <h3 className="text-xl font-black text-[#581845] tracking-tight">Share Syllabus Roadmap</h3>
+                                </div>
+                                <button onClick={() => setShowShareModal(false)} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 transition-colors">
+                                    <X className="w-6 h-6" />
+                                </button>
+                            </div>
+
+                            <div className="space-y-4">
+                                <p className="text-gray-500 text-xs font-semibold">
+                                    Share your custom checklist and playlisted resources for <span className="text-[#900C3F] font-bold">{selectedBranch} Semester {selectedSemester}</span> with other students!
+                                </p>
+
+                                {/* 1. Sharing Link */}
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Option A: Shareable Link</label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            readOnly
+                                            value={shareLink}
+                                            className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-xs font-mono font-bold text-gray-600 focus:outline-none"
+                                            onClick={(e) => e.target.select()}
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(shareLink);
+                                                setCopiedLink(true);
+                                                toast.success('Sharing URL copied!');
+                                                setTimeout(() => setCopiedLink(false), 2000);
+                                            }}
+                                            className="bg-[#900C3F] hover:bg-[#700931] text-white px-4 py-2.5 rounded-xl font-black text-xs transition-all shrink-0 flex items-center justify-center gap-1 shadow-md shadow-[#900C3F]/10"
+                                        >
+                                            {copiedLink ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                            {copiedLink ? 'Copied!' : 'Copy Link'}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* 2. Raw Syllabus Import Code */}
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Option B: Syllabus Import Code</label>
+                                    <div className="flex gap-2">
+                                        <textarea
+                                            readOnly
+                                            rows={4}
+                                            value={shareCode}
+                                            className="flex-1 bg-gray-50 border border-gray-200 rounded-xl p-3 text-[10px] font-mono font-bold text-gray-600 focus:outline-none resize-none"
+                                            onClick={(e) => e.target.select()}
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(shareCode);
+                                                setCopiedCode(true);
+                                                toast.success('Import Code copied!');
+                                                setTimeout(() => setCopiedCode(false), 2000);
+                                            }}
+                                            className="bg-[#581845] hover:bg-[#400d31] text-white px-4 py-2.5 rounded-xl font-black text-xs transition-all shrink-0 flex items-center justify-center gap-1 shadow-md shadow-[#581845]/10 h-10 align-middle self-start"
+                                        >
+                                            {copiedCode ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                            {copiedCode ? 'Copied!' : 'Copy Code'}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <p className="text-gray-400 text-[10px] font-medium leading-relaxed px-1">
+                                    The **Import Code** is a secure, compressed representation of your custom curriculum. Other students can paste either the full link or the import code into their **&quot;Import Syllabus&quot;** tab to load it instantly!
+                                </p>
                             </div>
                         </motion.div>
                     </div>
