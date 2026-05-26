@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import Navbar from '../components/Navbar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     ArrowLeft, 
@@ -127,72 +128,118 @@ const SubjectRoadmap = () => {
 
     // Load subject details & checklist on mount
     useEffect(() => {
-        try {
-            // Find subject in database
-            const deptSyllabus = syllabusData[branch] || {};
-            const semSubjects = deptSyllabus[Number(semester)] || deptSyllabus[String(semester)] || [];
-            const foundSubject = semSubjects.find(s => s.id === subjectId);
+        const loadSubjectAndTodos = async () => {
+            try {
+                // 1. Fetch dynamic admin subjects
+                let adminSubjects = [];
+                try {
+                    const res = await fetch(`${SERVER_URL}/api/admin/subjects`);
+                    if (res.ok) {
+                        adminSubjects = await res.json();
+                    }
+                } catch (err) {
+                    console.error("Failed to fetch admin subjects", err);
+                }
 
-            // Fallback for custom subject
-            if (foundSubject) {
-                setSubject(foundSubject);
-            } else {
-                // Check in localStorage if custom subject details are stored
-                const storageKey = `msit_roadmap_${branch}_sem${semester}`;
-                const customRoadmap = localStorage.getItem(storageKey);
-                if (customRoadmap) {
-                    try {
-                        const parsed = JSON.parse(customRoadmap);
-                        if (Array.isArray(parsed)) {
-                            const foundCustom = parsed.find(s => s.id === subjectId);
-                            if (foundCustom) {
-                                setSubject(foundCustom);
+                // Filter for matching branch and semester
+                const customAdminSubjects = adminSubjects.filter(
+                    s => s.branch === branch && Number(s.semester) === Number(semester)
+                );
+
+                // Find subject in static database
+                const deptSyllabus = syllabusData[branch] || {};
+                const semSubjects = deptSyllabus[Number(semester)] || deptSyllabus[String(semester)] || [];
+
+                // Combine base subjects and custom admin subjects
+                const allSubjects = [...semSubjects];
+                customAdminSubjects.forEach(adminSub => {
+                    const idx = allSubjects.findIndex(s => s.id === adminSub.id);
+                    if (idx !== -1) {
+                        allSubjects[idx] = {
+                            ...allSubjects[idx],
+                            ...adminSub,
+                            resources: [
+                                ...(allSubjects[idx].resources || []),
+                                ...(adminSub.resources || [])
+                            ].reduce((acc, current) => {
+                                const x = acc.find(item => item.url === current.url);
+                                if (!x) {
+                                    return acc.concat([current]);
+                                } else {
+                                    return acc;
+                                }
+                            }, [])
+                        };
+                    } else {
+                        allSubjects.push(adminSub);
+                    }
+                });
+
+                const foundSubject = allSubjects.find(s => s.id === subjectId);
+
+                // Fallback for custom subject
+                if (foundSubject) {
+                    setSubject(foundSubject);
+                } else {
+                    // Check in localStorage if custom subject details are stored
+                    const storageKey = `msit_roadmap_${branch}_sem${semester}`;
+                    const customRoadmap = localStorage.getItem(storageKey);
+                    if (customRoadmap) {
+                        try {
+                            const parsed = JSON.parse(customRoadmap);
+                            if (Array.isArray(parsed)) {
+                                const foundCustom = parsed.find(s => s.id === subjectId);
+                                if (foundCustom) {
+                                    setSubject(foundCustom);
+                                } else {
+                                    setSubject({ id: subjectId, name: subjectId.replace(/-/g, ' '), credits: 3, resources: [] });
+                                }
                             } else {
                                 setSubject({ id: subjectId, name: subjectId.replace(/-/g, ' '), credits: 3, resources: [] });
                             }
-                        } else {
+                        } catch (e) {
+                            console.error("Failed to parse custom roadmap from storage", e);
                             setSubject({ id: subjectId, name: subjectId.replace(/-/g, ' '), credits: 3, resources: [] });
                         }
-                    } catch (e) {
-                        console.error("Failed to parse custom roadmap from storage", e);
+                    } else {
                         setSubject({ id: subjectId, name: subjectId.replace(/-/g, ' '), credits: 3, resources: [] });
                     }
-                } else {
-                    setSubject({ id: subjectId, name: subjectId.replace(/-/g, ' '), credits: 3, resources: [] });
                 }
+            } catch (error) {
+                console.error("Error loading subject details from static database", error);
+                setSubject({ id: subjectId, name: subjectId.replace(/-/g, ' '), credits: 3, resources: [] });
             }
-        } catch (error) {
-            console.error("Error loading subject details from static database", error);
-            setSubject({ id: subjectId, name: subjectId.replace(/-/g, ' '), credits: 3, resources: [] });
-        }
 
-        // Load to-dos from localStorage
-        try {
-            const todoKey = `msit_subject_todo_${branch}_sem${semester}_${subjectId}`;
-            const savedTodos = localStorage.getItem(todoKey);
-            if (savedTodos) {
-                const parsed = JSON.parse(savedTodos);
-                if (Array.isArray(parsed)) {
-                    setTodos(parsed);
+            // Load to-dos from localStorage
+            try {
+                const todoKey = `msit_subject_todo_${branch}_sem${semester}_${subjectId}`;
+                const savedTodos = localStorage.getItem(todoKey);
+                if (savedTodos) {
+                    const parsed = JSON.parse(savedTodos);
+                    if (Array.isArray(parsed)) {
+                        setTodos(parsed);
+                    } else {
+                        throw new Error("Saved todos in storage is not an array");
+                    }
                 } else {
-                    throw new Error("Saved todos in storage is not an array");
+                    // Default initial to-dos
+                    setTodos([
+                        { id: 't1', text: 'Read the official textbook recommended chapters', done: false },
+                        { id: 't2', text: 'Review previous year exam questions (PYQ)', done: false },
+                        { id: 't3', text: 'Examine bound syllabus playlists and resources', done: false }
+                    ]);
                 }
-            } else {
-                // Default initial to-dos
+            } catch (e) {
+                console.error("Failed to load todos from storage. Falling back to default list.", e);
                 setTodos([
                     { id: 't1', text: 'Read the official textbook recommended chapters', done: false },
                     { id: 't2', text: 'Review previous year exam questions (PYQ)', done: false },
                     { id: 't3', text: 'Examine bound syllabus playlists and resources', done: false }
                 ]);
             }
-        } catch (e) {
-            console.error("Failed to load todos from storage. Falling back to default list.", e);
-            setTodos([
-                { id: 't1', text: 'Read the official textbook recommended chapters', done: false },
-                { id: 't2', text: 'Review previous year exam questions (PYQ)', done: false },
-                { id: 't3', text: 'Examine bound syllabus playlists and resources', done: false }
-            ]);
-        }
+        };
+
+        loadSubjectAndTodos();
     }, [branch, semester, subjectId]);
 
     // Save to-dos helper
@@ -353,21 +400,7 @@ Example response format:
         <div className="min-h-screen bg-gray-50 text-gray-900 font-sans flex flex-col">
             
             {/* Header Sticky Navigation */}
-            <header className="bg-white/80 backdrop-blur-md border-b sticky top-0 z-50">
-                <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-                    <button
-                        onClick={() => navigate('/more-features?import=')} 
-                        className="flex items-center gap-2 text-gray-400 hover:text-[#900C3F] transition-colors font-bold text-sm group"
-                    >
-                        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Syllabus
-                    </button>
-                    <div className="flex items-center gap-2">
-                        <Sparkles className="w-5 h-5 text-[#900C3F] animate-pulse" />
-                        <span className="font-black text-[#581845] tracking-tighter uppercase text-sm">AI SUBJECT BINDER</span>
-                    </div>
-                    <div className="w-10"></div> {/* Spacer */}
-                </div>
-            </header>
+            <Navbar showBack={true} backText="Back to Syllabus" onBackClick={() => navigate('/more-features?import=')} />
 
             {/* Main content grid */}
             <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8 md:py-12 space-y-10">
@@ -631,6 +664,82 @@ Example response format:
                 </div>
 
             </main>
+
+            {/* Add Custom Resource Modal */}
+            <AnimatePresence>
+                {showAddResourceModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowAddResourceModal(false)} />
+                        
+                        <motion.div 
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="bg-white rounded-[2.5rem] p-8 w-full max-w-md relative z-10 border shadow-2xl space-y-6"
+                        >
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-xl font-black text-[#581845] tracking-tight">Add Resource Binder</h3>
+                                <button onClick={() => setShowAddResourceModal(false)} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 transition-colors">
+                                    <X className="w-6 h-6" />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleAddResource} className="space-y-4">
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Resource Category</label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {['YouTube', 'PDF', 'Web'].map(cat => (
+                                            <button
+                                                key={cat}
+                                                type="button"
+                                                onClick={() => setNewResource({ ...newResource, category: cat })}
+                                                className={`py-2 rounded-xl font-bold text-xs uppercase transition-all border ${
+                                                    newResource.category === cat 
+                                                    ? 'bg-[#581845] text-white border-[#581845] shadow-md shadow-[#581845]/10' 
+                                                    : 'bg-white text-gray-505 border-gray-200 hover:border-gray-300'
+                                                }`}
+                                            >
+                                                {cat}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Resource Title</label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. Abdul Bari Algorithm Playlist"
+                                        required
+                                        value={newResource.title}
+                                        onChange={(e) => setNewResource({ ...newResource, title: e.target.value })}
+                                        className="bg-gray-50 border border-gray-200 rounded-2xl py-3 px-4 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#900C3F]/20"
+                                    />
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Resource Link / URL</label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. youtube.com/watch?v=..."
+                                        required
+                                        value={newResource.url}
+                                        onChange={(e) => setNewResource({ ...newResource, url: e.target.value })}
+                                        className="bg-gray-50 border border-gray-200 rounded-2xl py-3 px-4 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#900C3F]/20"
+                                    />
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    className="w-full py-4 bg-[#900C3F] text-white rounded-2xl font-black text-base shadow-lg shadow-[#900C3F]/20 hover:bg-[#700931] hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                                >
+                                    Add Binder <Plus className="w-5 h-5" />
+                                </button>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             {/* Footer */}
             <footer className="py-8 bg-white border-t mt-auto">

@@ -5,6 +5,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const resourceStore = require('../resourceStore');
+const syllabusStore = require('../syllabusStore');
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'msitadmin';
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkey';
@@ -94,6 +95,43 @@ router.delete('/resources/:id', authenticate, (req, res) => {
         res.json({ success: true });
     } else {
         res.status(500).json({ error: 'Failed to delete resource' });
+    }
+});
+
+// Public: Get all custom subjects
+router.get('/subjects', (req, res) => {
+    res.json(syllabusStore.getAll());
+});
+
+// Admin: Add custom subject
+router.post('/subjects', authenticate, (req, res) => {
+    const { branch, semester, subjectId, name, credits, resources } = req.body;
+    if (!branch || !semester || !subjectId || !name || !credits) {
+        return res.status(400).json({ error: 'Missing required subject details' });
+    }
+
+    const newSubject = {
+        branch,
+        semester: Number(semester),
+        id: subjectId,
+        name,
+        credits: Number(credits),
+        resources: resources || []
+    };
+
+    if (syllabusStore.add(newSubject)) {
+        res.json({ success: true, subject: newSubject });
+    } else {
+        res.status(500).json({ error: 'Failed to save subject' });
+    }
+});
+
+// Admin: Delete custom subject
+router.delete('/subjects/:id', authenticate, (req, res) => {
+    if (syllabusStore.delete(req.params.id)) {
+        res.json({ success: true });
+    } else {
+        res.status(500).json({ error: 'Failed to delete subject' });
     }
 });
 

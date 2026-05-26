@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowLeft, Shield, Lock, Eye, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import Navbar from '../components/Navbar';
 
 const PrivacyPolicy = () => {
     const navigate = useNavigate();
@@ -9,15 +10,7 @@ const PrivacyPolicy = () => {
         <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-[#900C3F] selection:text-white pb-20">
 
             {/* Header */}
-            <header className="px-6 py-6 md:px-12 flex items-center w-full z-10 relative border-b border-gray-100">
-                <button onClick={() => navigate('/')} className="hover:bg-gray-100 p-2 rounded-full transition-colors group">
-                    <ArrowLeft className="w-6 h-6 text-gray-600 group-hover:text-[#900C3F]" />
-                </button>
-                <div className="ml-4 flex items-center gap-2">
-                    <Shield className="w-6 h-6 text-[#900C3F]" />
-                    <span className="text-xl font-black text-[#581845]">Privacy Policy</span>
-                </div>
-            </header>
+            <Navbar showBack={true} backText="Back" />
 
             <main className="max-w-3xl mx-auto px-6 mt-8 space-y-12">
 

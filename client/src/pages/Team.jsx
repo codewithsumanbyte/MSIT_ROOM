@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowLeft, Github, Linkedin, Mail, Code, Palette, Briefcase } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import Navbar from '../components/Navbar';
 
 import sumanImg from '../assets/suman.jpg';
 import supritiImg from '../assets/supriti.png';
@@ -39,11 +40,7 @@ const Team = () => {
     return (
         <div className="min-h-screen bg-gray-50 font-sans selection:bg-[#900C3F] selection:text-white pb-20">
             {/* Header */}
-            <header className="px-6 py-6 md:px-12 flex items-center max-w-6xl mx-auto w-full z-10 relative">
-                <button onClick={() => navigate('/')} className="hover:bg-gray-200 p-2 rounded-full transition-colors group bg-white shadow-sm border border-gray-100">
-                    <ArrowLeft className="w-6 h-6 text-gray-600 group-hover:text-[#900C3F]" />
-                </button>
-            </header>
+            <Navbar showBack={true} backText="Back" />
 
             <main className="max-w-6xl mx-auto px-6 mt-4">
                 <div className="text-center mb-16 space-y-4 animate-in fade-in slide-in-from-bottom-4">

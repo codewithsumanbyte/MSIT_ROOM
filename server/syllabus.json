@@ -1,0 +1,17 @@
+[
+  {
+    "branch": "AIML",
+    "semester": 6,
+    "id": "PCCAIML",
+    "name": "cn",
+    "credits": 3,
+    "resources": [
+      {
+        "title": "CN full",
+        "url": "https://youtu.be/BS8il9QTp6c?si=h0bEYv9-XVs1AuqK",
+        "category": "YouTube"
+      }
+    ],
+    "uploadedAt": "2026-05-26T05:29:23.586Z"
+  }
+]

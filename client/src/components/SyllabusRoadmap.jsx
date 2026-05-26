@@ -25,6 +25,7 @@ import {
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { syllabusData, departments } from '../utils/syllabusData';
+import { SERVER_URL } from '../utils/config';
 
 const SyllabusRoadmap = () => {
     const navigate = useNavigate();
@@ -103,25 +104,79 @@ const SyllabusRoadmap = () => {
         }
     }, []);
 
-    // 2. Load Syllabus Roadmap state from localStorage or default static database
+    // 2. Load Syllabus Roadmap state from localStorage, static database, and merge dynamic admin subjects
     useEffect(() => {
-        const storageKey = `msit_roadmap_${selectedBranch}_sem${selectedSemester}`;
-        const savedRoadmap = localStorage.getItem(storageKey);
-        const savedProgress = localStorage.getItem(`${storageKey}_progress`);
-        
-        if (savedRoadmap) {
-            setRoadmap(JSON.parse(savedRoadmap));
-        } else {
-            // Fallback to pre-populated database
-            const defaultSubjects = syllabusData[selectedBranch]?.[selectedSemester] || [];
-            setRoadmap(defaultSubjects);
-        }
+        const loadSyllabus = async () => {
+            const storageKey = `msit_roadmap_${selectedBranch}_sem${selectedSemester}`;
+            const savedRoadmap = localStorage.getItem(storageKey);
+            const savedProgress = localStorage.getItem(`${storageKey}_progress`);
+            
+            let baseSubjects = [];
+            if (savedRoadmap) {
+                try {
+                    baseSubjects = JSON.parse(savedRoadmap);
+                } catch (e) {
+                    baseSubjects = syllabusData[selectedBranch]?.[selectedSemester] || [];
+                }
+            } else {
+                baseSubjects = syllabusData[selectedBranch]?.[selectedSemester] || [];
+            }
 
-        if (savedProgress) {
-            setCompletedItems(JSON.parse(savedProgress));
-        } else {
-            setCompletedItems({});
-        }
+            // Fetch dynamic admin subjects from backend
+            try {
+                const response = await fetch(`${SERVER_URL}/api/admin/subjects`);
+                if (response.ok) {
+                    const adminSubjects = await response.json();
+                    // Filter matching admin subjects
+                    const matchingAdminSubjects = adminSubjects.filter(
+                        s => s.branch === selectedBranch && Number(s.semester) === Number(selectedSemester)
+                    );
+                    
+                    // Merge matching admin subjects into baseSubjects
+                    const mergedSubjects = [...baseSubjects];
+                    matchingAdminSubjects.forEach(adminSub => {
+                        const idx = mergedSubjects.findIndex(s => s.id === adminSub.id);
+                        if (idx !== -1) {
+                            mergedSubjects[idx] = {
+                                ...mergedSubjects[idx],
+                                ...adminSub,
+                                resources: [
+                                    ...(mergedSubjects[idx].resources || []),
+                                    ...(adminSub.resources || [])
+                                ].reduce((acc, current) => {
+                                    const x = acc.find(item => item.url === current.url);
+                                    if (!x) {
+                                        return acc.concat([current]);
+                                    } else {
+                                        return acc;
+                                    }
+                                }, [])
+                            };
+                        } else {
+                            mergedSubjects.push(adminSub);
+                        }
+                    });
+                    setRoadmap(mergedSubjects);
+                } else {
+                    setRoadmap(baseSubjects);
+                }
+            } catch (err) {
+                console.error("Failed to load admin subjects:", err);
+                setRoadmap(baseSubjects);
+            }
+
+            if (savedProgress) {
+                try {
+                    setCompletedItems(JSON.parse(savedProgress));
+                } catch (e) {
+                    setCompletedItems({});
+                }
+            } else {
+                setCompletedItems({});
+            }
+        };
+
+        loadSyllabus();
     }, [selectedBranch, selectedSemester]);
 
     // 3. Sync Changes to Local Storage

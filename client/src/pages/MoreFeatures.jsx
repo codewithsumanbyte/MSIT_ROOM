@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calculator, BookOpen, Rocket, Plus, Trash2, RefreshCw, ChevronRight, Zap, Library } from 'lucide-react';
 import toast from 'react-hot-toast';
 import SyllabusRoadmap from '../components/SyllabusRoadmap';
+import Navbar from '../components/Navbar';
 
 const getGradeFromPoints = (points) => {
     const p = parseFloat(points);
@@ -134,19 +135,7 @@ const MoreFeatures = () => {
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col">
             {/* Navigation Header */}
-            <header className="bg-white/80 backdrop-blur-md border-b sticky top-0 z-50">
-                <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-                    <button
-                        onClick={() => navigate('/')}
-                        className="flex items-center gap-2 text-gray-600 hover:text-[#900C3F] transition-colors font-medium"
-                    >
-                        <ArrowLeft className="w-5 h-5" />
-                        <span>Back to Home</span>
-                    </button>
-                    <h1 className="text-xl font-bold text-gray-800">More Features</h1>
-                    <div className="w-20 hidden md:block"></div>
-                </div>
-            </header>
+            <Navbar />
 
             <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
                 {/* Feature Selector Tabs */}

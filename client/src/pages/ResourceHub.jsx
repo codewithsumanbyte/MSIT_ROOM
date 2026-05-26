@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Navbar from '../components/Navbar';
 import {
     ArrowLeft,
     Download,
@@ -63,21 +64,7 @@ const ResourceHub = () => {
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col">
             {/* Header */}
-            <header className="bg-white/80 backdrop-blur-md border-b sticky top-0 z-50">
-                <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-                    <button
-                        onClick={() => navigate('/more-features')}
-                        className="flex items-center gap-2 text-gray-400 hover:text-[#900C3F] transition-colors font-bold text-sm group"
-                    >
-                        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back
-                    </button>
-                    <div className="flex items-center gap-2">
-                        <Library className="w-5 h-5 text-[#900C3F]" />
-                        <span className="font-black text-[#581845] tracking-tighter">RESOURCE HUB</span>
-                    </div>
-                    <div className="w-10"></div> {/* Spacer */}
-                </div>
-            </header>
+            <Navbar showBack={true} backText="Back to GPA & Syllabus" onBackClick={() => navigate('/more-features')} />
 
             <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8 md:py-12">
                 {/* Hero section inside hub */}

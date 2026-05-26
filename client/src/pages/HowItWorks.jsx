@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowLeft, Zap, Shield, Clock, FileText, Send, Paperclip, Share2, Users, Layout, Lock, ScanLine } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import Navbar from '../components/Navbar';
 
 const HowItWorks = () => {
     const navigate = useNavigate();
@@ -9,14 +10,7 @@ const HowItWorks = () => {
         <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-[#900C3F] selection:text-white pb-24">
 
             {/* Header */}
-            <header className="px-6 py-6 border-b border-gray-100 sticky top-0 bg-white/80 backdrop-blur-md z-50">
-                <div className="max-w-5xl mx-auto flex items-center justify-between">
-                    <button onClick={() => navigate('/')} className="flex items-center gap-2 text-gray-500 hover:text-[#900C3F] transition-colors font-bold">
-                        <ArrowLeft className="w-5 h-5" /> Back
-                    </button>
-                    <span className="font-black text-[#900C3F] tracking-tight">HOW IT WORKS</span>
-                </div>
-            </header>
+            <Navbar showBack={true} backText="Back" />
 
             <main className="max-w-4xl mx-auto px-6 py-12">
 
