@@ -21,7 +21,9 @@ import {
     BookCheck,
     Copy,
     Check,
-    Download
+    Download,
+    ChevronDown,
+    Clock
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -89,6 +91,95 @@ const SyllabusRoadmap = () => {
     
     // Clipboard indicator
     const [copied, setCopied] = useState(false);
+
+    // Exam Countdown & Heatmap States
+    const [examDate, setExamDate] = useState(() => {
+        return localStorage.getItem(`msit_exam_date_${selectedBranch}_sem${selectedSemester}`) || '';
+    });
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [timeLeft, setTimeLeft] = useState(null);
+
+    // Overall Todo list search and filters
+    const [todoSearchQuery, setTodoSearchQuery] = useState('');
+    const [todoCategoryFilter, setTodoCategoryFilter] = useState('All');
+
+    // Sync exam date when branch/semester selection changes
+    useEffect(() => {
+        const savedDate = localStorage.getItem(`msit_exam_date_${selectedBranch}_sem${selectedSemester}`);
+        setExamDate(savedDate || '');
+        setTimeLeft(null);
+    }, [selectedBranch, selectedSemester]);
+
+    // Countdown interval calculation
+    useEffect(() => {
+        if (!examDate) {
+            setTimeLeft(null);
+            return;
+        }
+
+        const calculateTimeLeft = () => {
+            // Parse target date (local midnight)
+            const target = new Date(examDate + 'T00:00:00');
+            const difference = +target - +new Date();
+            let newTimeLeft = null;
+
+            if (difference > 0) {
+                newTimeLeft = {
+                    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+                    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+                    minutes: Math.floor((difference / 1000 / 60) % 60),
+                    seconds: Math.floor((difference / 1000) % 60),
+                    expired: false
+                };
+            } else {
+                newTimeLeft = { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true };
+            }
+            setTimeLeft(newTimeLeft);
+        };
+
+        calculateTimeLeft();
+        const timer = setInterval(calculateTimeLeft, 1000);
+
+        return () => clearInterval(timer);
+    }, [examDate]);
+
+    // Helper to calculate individual course checklist completion
+    const getSubjectProgress = (subject) => {
+        let totalItems = 1; // 1 for subject done check itself
+        let finishedItems = completedItems[`${subject.id}_done`] ? 1 : 0;
+
+        if (subject.resources && subject.resources.length > 0) {
+            totalItems += subject.resources.length;
+            subject.resources.forEach((_, idx) => {
+                if (completedItems[`${subject.id}_res_${idx}`]) {
+                    finishedItems += 1;
+                }
+            });
+        }
+        return Math.round((finishedItems / totalItems) * 100);
+    };
+
+    // Helper to gather all pending syllabus tasks (overall todo list)
+    const getPendingTodos = () => {
+        const todos = [];
+        roadmap.forEach(subject => {
+            if (!completedItems[`${subject.id}_done`]) {
+                subject.resources?.forEach((res, index) => {
+                    if (!completedItems[`${subject.id}_res_${index}`]) {
+                        todos.push({
+                            subjectId: subject.id,
+                            subjectName: subject.name,
+                            resourceIndex: index,
+                            title: res.title,
+                            url: res.url,
+                            category: res.category
+                        });
+                    }
+                });
+            }
+        });
+        return todos;
+    };
 
     // Form inputs
     const [newSubject, setNewSubject] = useState({ id: '', name: '', credits: 3 });
@@ -471,71 +562,123 @@ const SyllabusRoadmap = () => {
         <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
             
             {/* 1. Header Control Panel */}
-            <div className="bg-white/80 backdrop-blur-md p-6 rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/40 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                    {/* Branch select */}
-                    <div className="flex flex-col gap-1 w-full sm:w-auto">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Branch</label>
-                        <select
-                            value={selectedBranch}
-                            onChange={(e) => setSelectedBranch(e.target.value)}
-                            className="bg-gray-50 border border-gray-200 rounded-2xl py-2 px-4 text-sm font-bold text-[#581845] focus:outline-none focus:ring-2 focus:ring-[#900C3F]/20 cursor-pointer"
-                        >
-                            {departments.map(d => (
-                                <option key={d.code} value={d.code}>{d.name} ({d.code})</option>
-                            ))}
-                        </select>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch w-full">
+                
+                {/* Left Side: Selectors Card */}
+                <div className="lg:col-span-5 bg-white/80 backdrop-blur-md p-6 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/40 flex flex-col justify-between gap-5 relative overflow-hidden group">
+                    {/* Subtle decorative background gradient */}
+                    <div className="absolute -right-10 -bottom-10 w-32 h-32 bg-[#900C3F]/5 rounded-full blur-2xl group-hover:bg-[#900C3F]/10 transition-colors duration-500 pointer-events-none"></div>
+                    
+                    <div className="relative z-10">
+                        <span className="text-[10px] font-black text-[#900C3F] uppercase tracking-[0.2em] block">Active Curriculum</span>
+                        <h3 className="text-lg font-black text-[#581845] mt-1">Academic Selection</h3>
                     </div>
 
-                    {/* Semester select */}
-                    <div className="flex flex-col gap-1 w-full sm:w-auto">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Semester</label>
-                        <select
-                            value={selectedSemester}
-                            onChange={(e) => setSelectedSemester(Number(e.target.value))}
-                            className="bg-gray-50 border border-gray-200 rounded-2xl py-2 px-4 text-sm font-bold text-[#581845] focus:outline-none focus:ring-2 focus:ring-[#900C3F]/20 cursor-pointer"
-                        >
-                            {[...Array(8)].map((_, i) => (
-                                <option key={i + 1} value={i + 1}>Semester {i + 1}</option>
-                            ))}
-                        </select>
+                    <div className="flex flex-col sm:flex-row gap-4 relative z-10">
+                        {/* Branch select */}
+                        <div className="flex flex-col gap-1.5 flex-1">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Branch</label>
+                            <div className="relative">
+                                <select
+                                    value={selectedBranch}
+                                    onChange={(e) => setSelectedBranch(e.target.value)}
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3 pl-4 pr-10 text-sm font-bold text-[#581845] appearance-none focus:outline-none focus:ring-2 focus:ring-[#900C3F]/20 focus:border-[#900C3F]/30 focus:bg-white transition-all cursor-pointer shadow-sm"
+                                >
+                                    {departments.map(d => (
+                                        <option key={d.code} value={d.code}>{d.name} ({d.code})</option>
+                                    ))}
+                                </select>
+                                <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                            </div>
+                        </div>
+
+                        {/* Semester select */}
+                        <div className="flex flex-col gap-1.5 sm:w-36">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Semester</label>
+                            <div className="relative">
+                                <select
+                                    value={selectedSemester}
+                                    onChange={(e) => setSelectedSemester(Number(e.target.value))}
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3 pl-4 pr-10 text-sm font-bold text-[#581845] appearance-none focus:outline-none focus:ring-2 focus:ring-[#900C3F]/20 focus:border-[#900C3F]/30 focus:bg-white transition-all cursor-pointer shadow-sm"
+                                >
+                                    {[...Array(8)].map((_, i) => (
+                                        <option key={i + 1} value={i + 1}>Semester {i + 1}</option>
+                                    ))}
+                                </select>
+                                <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                            </div>
+                        </div>
                     </div>
-                                 <div className="flex flex-wrap items-center gap-3">
-                    <button
-                        onClick={generateShareLink}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-[#900C3F]/5 text-[#900C3F] font-black text-xs uppercase tracking-wider px-5 py-3 rounded-2xl border border-[#900C3F]/10 hover:bg-[#900C3F] hover:text-white transition-all shadow-none hover:shadow-lg hover:shadow-[#900C3F]/30"
-                    >
-                        {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
-                        {copied ? 'Copied!' : 'Share Roadmap'}
-                    </button>
+                </div>
 
-                    <button
-                        onClick={() => setShowManualImportModal(true)}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-[#900C3F]/5 text-[#900C3F] font-black text-xs uppercase tracking-wider px-5 py-3 rounded-2xl border border-[#900C3F]/10 hover:bg-[#900C3F] hover:text-white transition-all shadow-none hover:shadow-lg hover:shadow-[#900C3F]/30"
-                        title="Import a shared syllabus roadmap using a code or link"
-                    >
-                        <Download className="w-4 h-4" />
-                        Import Syllabus
-                    </button>
+                {/* Right Side: Tools Panel */}
+                <div className="lg:col-span-7 bg-white/80 backdrop-blur-md p-6 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/40 flex flex-col justify-between gap-5">
+                    <div>
+                        <span className="text-[10px] font-black text-[#581845]/60 uppercase tracking-[0.2em] block">Curriculum Actions</span>
+                        <h3 className="text-lg font-black text-[#581845] mt-1">Management & Sharing</h3>
+                    </div>
 
-                    <button
-                        onClick={() => setShowSettings(true)}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-[#581845]/5 text-[#581845] border border-[#581845]/10 hover:bg-[#581845] hover:text-white font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-2xl transition-all shadow-none hover:shadow-lg hover:shadow-[#581845]/20"
-                        title="Configure your default academic profile"
-                    >
-                        <Settings className="w-4 h-4" />
-                        Settings
-                    </button>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        {/* Share button */}
+                        <button
+                            onClick={generateShareLink}
+                            className="flex flex-col items-center justify-center gap-2 p-3.5 rounded-2xl bg-gradient-to-br from-white to-gray-50 border border-gray-200/60 hover:border-[#900C3F]/30 hover:bg-white transition-all duration-300 hover:shadow-md hover:shadow-[#900C3F]/5 group cursor-pointer text-center active:scale-[0.97] select-none"
+                        >
+                            <div className="w-10 h-10 rounded-xl bg-[#900C3F]/5 flex items-center justify-center text-[#900C3F] group-hover:scale-110 transition-transform duration-300">
+                                {copied ? <Check className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
+                            </div>
+                            <div className="flex flex-col items-center">
+                                <span className="font-black text-xs text-gray-800">{copied ? 'Copied!' : 'Share'}</span>
+                                <span className="text-[9px] font-bold text-gray-400 mt-0.5">Copy link</span>
+                            </div>
+                        </button>
 
-                    <button
-                        onClick={handleResetToDefault}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-2xl transition-all"
-                        title="Reset to default official syllabus"
-                    >
-                        <RefreshCw className="w-4 h-4" />
-                        Reset Defaults
-                    </button>
-                </div>  </div>
+                        {/* Import button */}
+                        <button
+                            onClick={() => setShowManualImportModal(true)}
+                            className="flex flex-col items-center justify-center gap-2 p-3.5 rounded-2xl bg-gradient-to-br from-white to-gray-50 border border-gray-200/60 hover:border-[#900C3F]/30 hover:bg-white transition-all duration-300 hover:shadow-md hover:shadow-[#900C3F]/5 group cursor-pointer text-center active:scale-[0.97] select-none"
+                            title="Import a shared syllabus roadmap using a code or link"
+                        >
+                            <div className="w-10 h-10 rounded-xl bg-[#900C3F]/5 flex items-center justify-center text-[#900C3F] group-hover:scale-110 transition-transform duration-300">
+                                <Download className="w-5 h-5" />
+                            </div>
+                            <div className="flex flex-col items-center">
+                                <span className="font-black text-xs text-gray-800">Import</span>
+                                <span className="text-[9px] font-bold text-gray-400 mt-0.5">Load code</span>
+                            </div>
+                        </button>
+
+                        {/* Settings button */}
+                        <button
+                            onClick={() => setShowSettings(true)}
+                            className="flex flex-col items-center justify-center gap-2 p-3.5 rounded-2xl bg-gradient-to-br from-white to-gray-50 border border-gray-200/60 hover:border-[#581845]/30 hover:bg-white transition-all duration-300 hover:shadow-md hover:shadow-[#581845]/5 group cursor-pointer text-center active:scale-[0.97] select-none"
+                            title="Configure your default academic profile"
+                        >
+                            <div className="w-10 h-10 rounded-xl bg-[#581845]/5 flex items-center justify-center text-[#581845] group-hover:scale-110 transition-transform duration-300">
+                                <Settings className="w-5 h-5" />
+                            </div>
+                            <div className="flex flex-col items-center">
+                                <span className="font-black text-xs text-gray-800">Settings</span>
+                                <span className="text-[9px] font-bold text-gray-400 mt-0.5">Set profile</span>
+                            </div>
+                        </button>
+
+                        {/* Reset button */}
+                        <button
+                            onClick={handleResetToDefault}
+                            className="flex flex-col items-center justify-center gap-2 p-3.5 rounded-2xl bg-gradient-to-br from-white to-gray-50 border border-gray-200/60 hover:border-red-200 hover:bg-white transition-all duration-300 hover:shadow-md hover:shadow-red-50 group cursor-pointer text-center active:scale-[0.97] select-none"
+                            title="Reset to default official syllabus"
+                        >
+                            <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform duration-300">
+                                <RefreshCw className="w-5 h-5 animate-hover-spin" />
+                            </div>
+                            <div className="flex flex-col items-center">
+                                <span className="font-black text-xs text-gray-800">Reset</span>
+                                <span className="text-[9px] font-bold text-gray-400 mt-0.5">Defaults</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             {/* 2. Global Progress Banner */}
@@ -571,6 +714,277 @@ const SyllabusRoadmap = () => {
                 </div>
             </div>
 
+            {/* 2.5 Exam Urgency & Syllabus Heatmap Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full items-stretch">
+                
+                {/* Countdown Card (col-span-12) */}
+                <div className="col-span-12 bg-white/80 backdrop-blur-md p-6 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/40 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden group">
+                    {/* Glowing background accent */}
+                    <div className="absolute -left-10 -bottom-10 w-32 h-32 bg-[#900C3F]/5 rounded-full blur-2xl group-hover:bg-[#900C3F]/10 transition-colors duration-500 pointer-events-none"></div>
+
+                    <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-6 flex-1">
+                        <div className="shrink-0">
+                            <span className="text-[10px] font-black text-[#900C3F] uppercase tracking-[0.2em] block">Countdown Tracker</span>
+                            <h3 className="text-lg font-black text-[#581845] mt-1 whitespace-nowrap">Exam Urgency</h3>
+                        </div>
+
+                        {/* Timer Display Area */}
+                        <div className="flex items-center justify-center sm:justify-start flex-1">
+                            {showDatePicker ? (
+                                <div className="flex items-center gap-2 w-full max-w-xs animate-in fade-in zoom-in-95 duration-200">
+                                    <input
+                                        type="date"
+                                        value={examDate}
+                                        onChange={(e) => {
+                                            const newDate = e.target.value;
+                                            setExamDate(newDate);
+                                            localStorage.setItem(`msit_exam_date_${selectedBranch}_sem${selectedSemester}`, newDate);
+                                            setShowDatePicker(false);
+                                        }}
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm font-bold text-[#581845] focus:outline-none focus:ring-2 focus:ring-[#900C3F]/20 outline-none"
+                                    />
+                                    <button
+                                        onClick={() => setShowDatePicker(false)}
+                                        className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-xl transition-all font-bold text-xs"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            ) : examDate ? (
+                                timeLeft ? (
+                                    <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-2.5">
+                                        <div className="flex flex-col items-center justify-center bg-gray-50/80 border border-gray-155 rounded-2xl w-12 xs:w-14 sm:w-16 h-12 xs:h-14 sm:h-16 shadow-sm shrink-0">
+                                            <span className="text-xl xs:text-2xl font-black text-[#900C3F] tracking-tight">{timeLeft.days}</span>
+                                            <span className="text-[8px] xs:text-[9px] font-black text-gray-400 uppercase tracking-widest mt-0.5">Days</span>
+                                        </div>
+                                        <div className="text-lg xs:text-xl font-black text-gray-300 animate-pulse shrink-0">:</div>
+                                        <div className="flex flex-col items-center justify-center bg-gray-50/80 border border-gray-155 rounded-2xl w-12 xs:w-14 sm:w-16 h-12 xs:h-14 sm:h-16 shadow-sm shrink-0">
+                                            <span className="text-xl xs:text-2xl font-black text-[#581845] tracking-tight">{String(timeLeft.hours).padStart(2, '0')}</span>
+                                            <span className="text-[8px] xs:text-[9px] font-black text-gray-400 uppercase tracking-widest mt-0.5">Hours</span>
+                                        </div>
+                                        <div className="text-lg xs:text-xl font-black text-gray-300 animate-pulse shrink-0">:</div>
+                                        <div className="flex flex-col items-center justify-center bg-gray-50/80 border border-gray-155 rounded-2xl w-12 xs:w-14 sm:w-16 h-12 xs:h-14 sm:h-16 shadow-sm shrink-0">
+                                            <span className="text-xl xs:text-2xl font-black text-[#581845] tracking-tight">{String(timeLeft.minutes).padStart(2, '0')}</span>
+                                            <span className="text-[8px] xs:text-[9px] font-black text-gray-400 uppercase tracking-widest mt-0.5">Mins</span>
+                                        </div>
+                                        <div className="text-lg xs:text-xl font-black text-gray-300 animate-pulse shrink-0">:</div>
+                                        <div className="flex flex-col items-center justify-center bg-gray-50/80 border border-gray-155 rounded-2xl w-12 xs:w-14 sm:w-16 h-12 xs:h-14 sm:h-16 shadow-sm shrink-0">
+                                            <span className="text-xl xs:text-2xl font-black text-[#900C3F] tracking-tight">{String(timeLeft.seconds).padStart(2, '0')}</span>
+                                            <span className="text-[8px] xs:text-[9px] font-black text-gray-400 uppercase tracking-widest mt-0.5">Secs</span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-sm text-gray-400 font-bold">Calculating countdown...</div>
+                                )
+                            ) : (
+                                <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
+                                    <span className="text-xs text-gray-400 font-bold">Set your exam date to start countdown.</span>
+                                    <button
+                                        onClick={() => setShowDatePicker(true)}
+                                        className="text-xs font-black text-[#900C3F] hover:text-[#700931] uppercase tracking-wider bg-[#900C3F]/5 hover:bg-[#900C3F]/10 px-3 py-1.5 rounded-xl border border-[#900C3F]/10 transition-all cursor-pointer"
+                                    >
+                                        Set Date
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Settings / Badge Area */}
+                    <div className="relative z-10 flex flex-row items-center justify-end gap-3 shrink-0">
+                        {examDate && !showDatePicker && timeLeft && (
+                            <>
+                                {/* Urgency Badge */}
+                                {timeLeft.expired ? (
+                                    <div className="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 font-black text-[10px] uppercase tracking-wider flex items-center gap-1">
+                                        <BookCheck className="w-3.5 h-3.5" /> Done
+                                    </div>
+                                ) : timeLeft.days <= 14 ? (
+                                    <div className="px-3 py-1.5 rounded-xl bg-red-50 border border-red-200 text-red-600 font-black text-[10px] uppercase tracking-wider flex items-center gap-1 animate-pulse">
+                                        <AlertCircle className="w-3.5 h-3.5" /> Critical
+                                    </div>
+                                ) : timeLeft.days <= 30 ? (
+                                    <div className="px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-600 font-black text-[10px] uppercase tracking-wider flex items-center gap-1">
+                                        <AlertCircle className="w-3.5 h-3.5" /> Moderate
+                                    </div>
+                                ) : (
+                                    <div className="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 font-black text-[10px] uppercase tracking-wider flex items-center gap-1">
+                                        <Sparkles className="w-3.5 h-3.5" /> Safe
+                                    </div>
+                                )}
+
+                                <button
+                                    onClick={() => setShowDatePicker(true)}
+                                    className="text-[10px] font-black text-gray-500 hover:text-gray-800 uppercase tracking-wider bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-xl border border-gray-200 transition-all cursor-pointer"
+                                >
+                                    Change
+                                </button>
+                            </>
+                        )}
+                    </div>
+                </div>
+
+                {/* Pending Syllabus Tasks Card (col-span-12) */}
+                <div className="col-span-12 bg-white/80 backdrop-blur-md p-6 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/40 flex flex-col justify-between gap-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <span className="text-[10px] font-black text-[#581845]/60 uppercase tracking-[0.2em] block">Study Agenda</span>
+                            <h3 className="text-lg font-black text-[#581845] mt-1">Pending Syllabus Tasks</h3>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                            <span className="px-3 py-1 rounded-xl bg-[#900C3F]/5 text-[#900C3F] font-black text-[10px] uppercase tracking-wider">
+                                {getPendingTodos().length} remaining
+                            </span>
+                        </div>
+                    </div>
+
+                    {roadmap.length === 0 ? (
+                        <div className="flex-1 flex items-center justify-center text-center p-6 border-2 border-dashed border-gray-150 rounded-2xl">
+                            <span className="text-xs text-gray-400 uppercase font-black tracking-widest italic">No subjects loaded for this semester</span>
+                        </div>
+                    ) : getPendingTodos().length === 0 ? (
+                        <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-emerald-50/20 border border-emerald-100 rounded-3xl space-y-3">
+                            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+                                <BookCheck className="w-6 h-6 animate-bounce" />
+                            </div>
+                            <div>
+                                <h4 className="font-black text-[#581845] text-base">All Caught Up!</h4>
+                                <p className="text-gray-400 text-xs font-semibold mt-1">Excellent work! You have completed all syllabus resources for this semester.</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {/* Search & Filters Controls */}
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                {/* Search input */}
+                                <div className="relative flex-1">
+                                    <input
+                                        type="text"
+                                        placeholder="Search pending tasks..."
+                                        value={todoSearchQuery}
+                                        onChange={(e) => setTodoSearchQuery(e.target.value)}
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-2.5 pl-4 pr-10 text-xs font-bold text-[#581845] focus:outline-none focus:ring-2 focus:ring-[#900C3F]/20 focus:border-[#900C3F]/30 focus:bg-white transition-all shadow-sm"
+                                    />
+                                    {todoSearchQuery && (
+                                        <button 
+                                            onClick={() => setTodoSearchQuery('')}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                                        >
+                                            <X className="w-3 h-3" />
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Category Filters */}
+                                <div className="flex items-center gap-1 bg-gray-50 border border-gray-200/80 p-1 rounded-2xl shrink-0 overflow-x-auto">
+                                    {['All', 'YouTube', 'PDF', 'Web'].map((cat) => (
+                                        <button
+                                            key={cat}
+                                            onClick={() => setTodoCategoryFilter(cat)}
+                                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all select-none cursor-pointer ${
+                                                todoCategoryFilter === cat
+                                                ? 'bg-white text-[#900C3F] shadow-sm font-black border border-gray-200/40'
+                                                : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100/60'
+                                            }`}
+                                        >
+                                            {cat}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Task Rows List */}
+                            <div className="max-h-72 overflow-y-auto pr-1 space-y-2 custom-scrollbar">
+                                {(() => {
+                                    const filtered = getPendingTodos().filter(todo => {
+                                        const matchesCategory = todoCategoryFilter === 'All' || todo.category === todoCategoryFilter;
+                                        const matchesSearch = todoSearchQuery === '' || 
+                                            todo.title.toLowerCase().includes(todoSearchQuery.toLowerCase()) ||
+                                            todo.subjectId.toLowerCase().includes(todoSearchQuery.toLowerCase()) ||
+                                            todo.subjectName.toLowerCase().includes(todoSearchQuery.toLowerCase());
+                                        return matchesCategory && matchesSearch;
+                                    });
+
+                                    if (filtered.length === 0) {
+                                        return (
+                                            <div className="text-center py-6 text-gray-400 text-xs font-semibold italic uppercase tracking-wider">
+                                                No matching pending tasks found
+                                            </div>
+                                        );
+                                    }
+
+                                    return filtered.map((todo, idx) => {
+                                        const handleRowClick = () => {
+                                            const element = document.getElementById(`subject-card-${todo.subjectId}`);
+                                            if (element) {
+                                                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                                element.classList.add('ring-2', 'ring-[#900C3F]/30');
+                                                setTimeout(() => {
+                                                    element.classList.remove('ring-2', 'ring-[#900C3F]/30');
+                                                }, 1500);
+                                            }
+                                        };
+
+                                        return (
+                                            <div 
+                                                key={`${todo.subjectId}_${todo.resourceIndex}_${idx}`} 
+                                                className="flex items-center justify-between p-3 rounded-2xl bg-white border border-gray-100 hover:border-gray-200 hover:shadow-md hover:shadow-gray-100/50 transition-all duration-300 group/row"
+                                            >
+                                                <div className="flex items-center gap-3 overflow-hidden flex-1 mr-4">
+                                                    {/* Complete Task checkbox */}
+                                                    <button
+                                                        onClick={() => toggleResource(todo.subjectId, todo.resourceIndex)}
+                                                        className="shrink-0 text-gray-300 hover:text-emerald-500 transition-colors"
+                                                        title="Mark as Completed"
+                                                    >
+                                                        <CheckCircle2 className="w-5 h-5 fill-current bg-white rounded-full transition-transform group-hover/row:scale-105" />
+                                                    </button>
+
+                                                    <span className="shrink-0 p-1 bg-gray-50 rounded-lg">{getResourceIcon(todo.category)}</span>
+                                                    
+                                                    {/* Subject ID Tag */}
+                                                    <button 
+                                                        onClick={handleRowClick}
+                                                        className="shrink-0 text-[10px] font-mono font-black px-2 py-0.5 rounded bg-gray-100 text-gray-500 hover:bg-[#900C3F]/10 hover:text-[#900C3F] transition-colors"
+                                                        title={`Scroll to ${todo.subjectId}`}
+                                                    >
+                                                        {todo.subjectId}
+                                                    </button>
+                                                    
+                                                    {/* Title */}
+                                                    <span className="font-bold text-xs text-[#581845] truncate" title={todo.title}>
+                                                        {todo.title}
+                                                    </span>
+                                                </div>
+
+                                                <div className="flex items-center gap-3 shrink-0">
+                                                    {/* Subject Name label */}
+                                                    <span className="hidden md:inline text-[10px] font-bold text-gray-400 max-w-[150px] truncate" title={todo.subjectName}>
+                                                        {todo.subjectName}
+                                                    </span>
+
+                                                    {/* External Link */}
+                                                    <a 
+                                                        href={todo.url} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer" 
+                                                        className="p-2 hover:bg-[#900C3F]/5 text-gray-400 hover:text-[#900C3F] rounded-xl transition-colors border border-transparent hover:border-[#900C3F]/10"
+                                                        title="Open Resource Link"
+                                                    >
+                                                        <ExternalLink className="w-4 h-4" />
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        );
+                                    });
+                                })()}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
             {/* 3. Subject Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <AnimatePresence mode="popLayout">
@@ -584,6 +998,7 @@ const SyllabusRoadmap = () => {
                         return (
                             <motion.div
                                 key={subject.id}
+                                id={`subject-card-${subject.id}`}
                                 layout
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
