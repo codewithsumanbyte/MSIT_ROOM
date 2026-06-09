@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { SERVER_URL } from '../utils/config';
+import PdfViewer from '../components/PdfViewer';
 
 const ResourceHub = () => {
     const navigate = useNavigate();
@@ -23,6 +24,7 @@ const ResourceHub = () => {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeYear, setActiveYear] = useState('1st Year');
+    const [selectedResource, setSelectedResource] = useState(null);
 
     const years = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
     const categories = ['Organizer', 'Study Notes', 'PYQ'];
@@ -157,12 +159,21 @@ const ResourceHub = () => {
                                                         <h3 className="font-black text-[#581845] text-lg leading-tight mb-2 group-hover:text-[#900C3F] transition-colors">{res.title}</h3>
                                                         <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-6">Uploaded: {new Date(res.uploadedAt).toLocaleDateString()}</p>
 
-                                                        <button
-                                                            onClick={() => handleDownload(res)}
-                                                            className="w-full flex items-center justify-center gap-2 bg-[#900C3F]/5 text-[#900C3F] py-3 rounded-2xl font-black text-sm group-hover:bg-[#900C3F] group-hover:text-white transition-all shadow-none group-hover:shadow-lg group-hover:shadow-[#900C3F]/30"
-                                                        >
-                                                            <Download className="w-4 h-4" /> Download Resource
-                                                        </button>
+                                                        <div className="flex gap-2 w-full mt-4">
+                                                            <button
+                                                                onClick={() => setSelectedResource(res)}
+                                                                className="flex-1 flex items-center justify-center gap-2 bg-[#900C3F]/5 text-[#900C3F] py-3 rounded-2xl font-black text-sm group-hover:bg-[#900C3F] group-hover:text-white transition-all shadow-none group-hover:shadow-lg group-hover:shadow-[#900C3F]/30 active:scale-95"
+                                                            >
+                                                                <BookOpen className="w-4 h-4" /> Preview & Study
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDownload(res)}
+                                                                className="p-3 flex items-center justify-center bg-[#900C3F]/5 text-[#900C3F] hover:bg-[#900C3F] hover:text-white rounded-2xl transition-all active:scale-95 shrink-0"
+                                                                title="Download File"
+                                                            >
+                                                                <Download className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             ))}
@@ -187,6 +198,13 @@ const ResourceHub = () => {
                     </p>
                 </div>
             </main>
+
+            {selectedResource && (
+                <PdfViewer 
+                    resource={selectedResource} 
+                    onClose={() => setSelectedResource(null)} 
+                />
+            )}
         </div>
     );
 };

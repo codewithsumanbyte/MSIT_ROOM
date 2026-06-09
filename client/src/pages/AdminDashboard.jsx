@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { SERVER_URL } from '../utils/config';
+import PdfViewer from '../components/PdfViewer';
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
@@ -44,6 +45,7 @@ const AdminDashboard = () => {
     // Custom subjects list
     const [customSubjects, setCustomSubjects] = useState([]);
     const [showSidebar, setShowSidebar] = useState(false);
+    const [selectedResource, setSelectedResource] = useState(null);
 
     useEffect(() => {
         const token = localStorage.getItem('adminToken');
@@ -492,13 +494,22 @@ const AdminDashboard = () => {
                                                         <p className="text-[11px] font-black text-gray-400 font-mono">{(res.size / 1024 / 1024).toFixed(2)} MB</p>
                                                     </td>
                                                     <td className="px-10 py-6 text-right">
-                                                        <button
-                                                            onClick={() => handleDelete(res.id)}
-                                                            className="p-3 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
-                                                            title="Delete Permanent"
-                                                        >
-                                                            <Trash2 className="w-5 h-5" />
-                                                        </button>
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <button
+                                                                onClick={() => setSelectedResource(res)}
+                                                                className="p-3 text-gray-300 hover:text-[#900C3F] hover:bg-[#900C3F]/5 rounded-2xl transition-all active:scale-95"
+                                                                title="Preview & Solve"
+                                                            >
+                                                                <ExternalLink className="w-5 h-5" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDelete(res.id)}
+                                                                className="p-3 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all active:scale-95"
+                                                                title="Delete Permanent"
+                                                            >
+                                                                <Trash2 className="w-5 h-5" />
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -524,12 +535,22 @@ const AdminDashboard = () => {
                                                         <p className="text-[10px] font-bold text-gray-400 uppercase mt-0.5">{(res.size / 1024 / 1024).toFixed(1)} MB</p>
                                                     </div>
                                                 </div>
-                                                <button
-                                                    onClick={() => handleDelete(res.id)}
-                                                    className="p-3 bg-red-50 text-red-500 rounded-2xl active:scale-95 transition-all"
-                                                >
-                                                    <Trash2 className="w-5 h-5" />
-                                                </button>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => setSelectedResource(res)}
+                                                        className="p-3 bg-[#900C3F]/5 text-[#900C3F] rounded-2xl active:scale-95 transition-all"
+                                                        title="Preview & Solve"
+                                                    >
+                                                        <ExternalLink className="w-5 h-5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(res.id)}
+                                                        className="p-3 bg-red-50 text-red-500 rounded-2xl active:scale-95 transition-all"
+                                                        title="Delete Permanent"
+                                                    >
+                                                        <Trash2 className="w-5 h-5" />
+                                                    </button>
+                                                </div>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <span className="bg-blue-50 text-blue-600 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase">{res.year}</span>
@@ -813,6 +834,13 @@ const AdminDashboard = () => {
 
                 </div>
             </main>
+
+            {selectedResource && (
+                <PdfViewer 
+                    resource={selectedResource} 
+                    onClose={() => setSelectedResource(null)} 
+                />
+            )}
         </div>
     );
 };
