@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calculator, BookOpen, Rocket, Plus, Trash2, RefreshCw, ChevronRight, Zap, Library } from 'lucide-react';
+import { ArrowLeft, Calculator, BookOpen, Rocket, Plus, Trash2, RefreshCw, ChevronRight, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import SyllabusRoadmap from '../components/SyllabusRoadmap';
 import Navbar from '../components/Navbar';
+import LottieAnimation from '../components/LottieAnimation';
 
 const getGradeFromPoints = (points) => {
     const p = parseFloat(points);
@@ -159,13 +160,6 @@ const MoreFeatures = () => {
                     >
                         <BookOpen className="w-5 h-5" />
                         Syllabus Roadmap
-                    </button>
-                    <button
-                        onClick={() => navigate('/resource-hub')}
-                        className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all shadow-sm bg-white text-gray-600 hover:bg-gray-100 border border-transparent hover:border-[#900C3F]/20`}
-                    >
-                        <Library className="w-5 h-5 text-[#900C3F]" />
-                        Academic Hub (PYQ)
                     </button>
                 </div>
 
@@ -388,6 +382,16 @@ const MoreFeatures = () => {
                                 </div>
                             </div>
                         )}
+
+                        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex flex-col items-center text-center relative overflow-hidden group hover:shadow-md transition-shadow">
+                            <div className="w-28 h-28 -mt-2">
+                                <LottieAnimation animationPath="/study_hat.json" className="w-full h-full" />
+                            </div>
+                            <h4 className="font-black text-[#581845] text-lg mb-1">Aiming for the Hat?</h4>
+                            <p className="text-xs text-gray-400 font-bold leading-relaxed max-w-[220px]">
+                                Plan your roadmap, track your GPA, and secure your academic excellence.
+                            </p>
+                        </div>
 
                         <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
                             <h3 className="font-bold text-gray-800 mb-2">Did you know?</h3>

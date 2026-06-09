@@ -33,9 +33,7 @@ const Navbar = ({ showBack = false, backText = "Back", onBackClick }) => {
     };
 
     const navLinks = [
-        { name: "Academic Hub", path: "/resource-hub", icon: <BookOpen className="w-5 h-5" /> },
         { name: "GPA & Syllabus", path: "/more-features", icon: <Calculator className="w-5 h-5" /> },
-        
     ];
 
     return (

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useRoom } from '../context/RoomContext';
 import LoadingScreen from '../components/LoadingScreen';
 import Navbar from '../components/Navbar';
+import LottieAnimation from '../components/LottieAnimation';
 import {
     ArrowRight,
     Clock,
@@ -134,19 +135,25 @@ const Home = () => {
             <main className="flex-1 flex flex-col items-center pt-12 pb-12 px-6 text-center max-w-6xl mx-auto w-full z-10">
 
                 {/* Hero */}
-                <div className="mb-16 space-y-6 max-w-3xl relative">
-                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-40 h-40 bg-[#900C3F]/5 rounded-full blur-3xl"></div>
+                <div className="grid lg:grid-cols-12 gap-8 items-center w-full mb-16 text-center lg:text-left relative">
+                    <div className="absolute -top-10 left-1/2 lg:left-0 -translate-x-1/2 lg:translate-x-0 w-40 h-40 bg-[#900C3F]/5 rounded-full blur-3xl"></div>
 
-                    <h1 className="text-5xl md:text-7xl font-black text-[#581845] leading-tight tracking-tighter relative drop-shadow-sm mb-6">
-                        Create. <span className="text-[#900C3F]">Send.</span> <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#900C3F] to-[#C70039]">Done.</span>
-                    </h1>
-                    <p className="text-gray-400 font-bold text-sm md:text-base tracking-[0.3em] uppercase opacity-80">
-                        Simple. Secure. Speed.
-                    </p>
-                    <div className="pt-4">
-                        <Link to="/how-it-works" className="inline-flex items-center gap-2 text-[#900C3F] font-bold border-b-2 border-[#900C3F]/20 hover:border-[#900C3F] transition-colors pb-1 text-sm md:text-base">
-                            <BookOpen className="w-4 h-4" /> How it Works
-                        </Link>
+                    <div className="lg:col-span-8 space-y-6 flex flex-col items-center lg:items-start">
+                        <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-[4.5rem] xl:text-[5.5rem] font-black text-[#581845] leading-tight tracking-tighter relative drop-shadow-sm lg:whitespace-nowrap">
+                            Create. <span className="text-[#900C3F]">Send.</span> <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#900C3F] to-[#C70039]">Done.</span>
+                        </h1>
+                        <p className="text-gray-400 font-bold text-base md:text-lg lg:text-xl tracking-[0.3em] uppercase opacity-80">
+                            Simple. Secure. Speed.
+                        </p>
+                        <div className="pt-4">
+                            <Link to="/how-it-works" className="inline-flex items-center gap-2 text-[#900C3F] font-bold border-b-2 border-[#900C3F]/20 hover:border-[#900C3F] transition-colors pb-1 text-sm md:text-base">
+                                <BookOpen className="w-4 h-4" /> How it Works
+                            </Link>
+                        </div>
+                    </div>
+
+                    <div className="lg:col-span-4 flex justify-center items-center w-full max-w-[240px] sm:max-w-[280px] lg:max-w-[320px] mx-auto drop-shadow-2xl">
+                        <LottieAnimation animationPath="/person_flying.json" className="w-full h-auto" />
                     </div>
                 </div>
 
@@ -185,9 +192,12 @@ const Home = () => {
 
                             <button
                                 onClick={handleCreate}
-                                className="w-full py-4 bg-[#900C3F] text-white rounded-xl font-bold text-lg shadow-lg shadow-[#900C3F]/30 hover:bg-[#700931] hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                                className="btn-start-room"
                             >
-                                Start Room <ArrowRight className="w-5 h-5" />
+                                Start Room
+                                <div className="icon">
+                                    <ArrowRight className="w-5 h-5" />
+                                </div>
                             </button>
                         </div>
                     </div>
@@ -241,9 +251,12 @@ const Home = () => {
                                     // Join room AIML3 as a permanent room
                                     createRoom(30, true, 'AIML3');
                                 }}
-                                className="w-full py-4 bg-white text-[#900C3F] rounded-xl font-bold text-lg shadow-lg hover:bg-gray-50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                                className="btn-common-room"
                             >
-                                <Users className="w-5 h-5 fill-current" /> Common Room
+                                Common Room
+                                <div className="icon">
+                                    <Users className="w-5 h-5 fill-current" />
+                                </div>
                             </button>
                         </div>
                     </div>
@@ -263,9 +276,12 @@ const Home = () => {
 
                             <button
                                 onClick={() => navigate('/more-features')}
-                                className="w-full py-4 bg-[#581845] text-white rounded-xl font-bold text-lg shadow-lg hover:bg-[#900C3F] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                                className="btn-explore-tools"
                             >
-                                <Plus className="w-5 h-5" /> Explore Tools
+                                Explore Tools
+                                <div className="icon">
+                                    <Plus className="w-5 h-5" />
+                                </div>
                             </button>
                         </div>
                     </div>

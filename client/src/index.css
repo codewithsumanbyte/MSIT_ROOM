@@ -70,3 +70,160 @@ body {
     width: 100%;
   }
 }
+
+/* Custom Premium Buttons */
+.btn-start-room {
+  background: #900C3F;
+  color: white;
+  font-family: inherit;
+  padding: 0.35em;
+  padding-left: 1.25em;
+  font-size: 18px;
+  font-weight: 800;
+  border-radius: 0.95em;
+  border: none;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  box-shadow: inset 0 0 1.6em -0.6em #700931, 0 10px 15px -3px rgba(144, 12, 63, 0.2);
+  overflow: hidden;
+  position: relative;
+  height: 3.3em;
+  padding-right: 3.3em;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.3s;
+}
+.btn-start-room .icon {
+  background: white;
+  margin-left: 1em;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.7em;
+  width: 2.7em;
+  border-radius: 0.75em;
+  box-shadow: 0.1em 0.1em 0.6em 0.2em rgba(144, 12, 63, 0.3);
+  right: 0.3em;
+  transition: all 0.3s;
+}
+.btn-start-room:hover .icon {
+  width: calc(100% - 0.6em);
+}
+.btn-start-room .icon svg {
+  width: 1.2em;
+  height: 1.2em;
+  transition: transform 0.3s;
+  color: #900C3F;
+}
+.btn-start-room:hover .icon svg {
+  transform: translateX(0.1em);
+}
+.btn-start-room:active .icon {
+  transform: scale(0.95);
+}
+
+.btn-common-room {
+  background: white;
+  color: #900C3F;
+  font-family: inherit;
+  padding: 0.35em;
+  padding-left: 1.25em;
+  font-size: 18px;
+  font-weight: 800;
+  border-radius: 0.95em;
+  border: none;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  box-shadow: inset 0 0 1.6em -0.6em rgba(144, 12, 63, 0.2), 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  position: relative;
+  height: 3.3em;
+  padding-right: 3.3em;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.3s;
+}
+.btn-common-room .icon {
+  background: #900C3F;
+  margin-left: 1em;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.7em;
+  width: 2.7em;
+  border-radius: 0.75em;
+  box-shadow: 0.1em 0.1em 0.6em 0.2em rgba(255, 255, 255, 0.2);
+  right: 0.3em;
+  transition: all 0.3s;
+}
+.btn-common-room:hover .icon {
+  width: calc(100% - 0.6em);
+}
+.btn-common-room .icon svg {
+  width: 1.2em;
+  height: 1.2em;
+  transition: transform 0.3s;
+  color: white;
+}
+.btn-common-room:hover .icon svg {
+  transform: translateX(0.1em);
+}
+.btn-common-room:active .icon {
+  transform: scale(0.95);
+}
+
+.btn-explore-tools {
+  background: #581845;
+  color: white;
+  font-family: inherit;
+  padding: 0.35em;
+  padding-left: 1.25em;
+  font-size: 18px;
+  font-weight: 800;
+  border-radius: 0.95em;
+  border: none;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  box-shadow: inset 0 0 1.6em -0.6em #3a102e, 0 10px 15px -3px rgba(88, 24, 69, 0.2);
+  overflow: hidden;
+  position: relative;
+  height: 3.3em;
+  padding-right: 3.3em;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.3s;
+}
+.btn-explore-tools .icon {
+  background: white;
+  margin-left: 1em;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.7em;
+  width: 2.7em;
+  border-radius: 0.75em;
+  box-shadow: 0.1em 0.1em 0.6em 0.2em rgba(88, 24, 69, 0.3);
+  right: 0.3em;
+  transition: all 0.3s;
+}
+.btn-explore-tools:hover .icon {
+  width: calc(100% - 0.6em);
+}
+.btn-explore-tools .icon svg {
+  width: 1.2em;
+  height: 1.2em;
+  transition: transform 0.3s;
+  color: #581845;
+}
+.btn-explore-tools:hover .icon svg {
+  transform: translateX(0.1em);
+}
+.btn-explore-tools:active .icon {
+  transform: scale(0.95);
+}
